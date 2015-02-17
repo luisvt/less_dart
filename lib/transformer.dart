@@ -65,8 +65,8 @@ class LessTransformer extends AggregateTransformer {
             return asset.readAsString().then((content) {
               List<String> flags = _createFlags();  //to build process arguments
               var id = asset.id;
-              String inputFile = options.entry_points[0];
-              String outputFile = inputFile.replaceFirst(".less", ".css");
+              String inputFile = id.path;
+              String outputFile = getOutputFileName(id);
           
               switch (options.build_mode) {
                 case BUILD_MODE_DART:
