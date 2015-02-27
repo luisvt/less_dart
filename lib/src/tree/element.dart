@@ -12,7 +12,7 @@ class Element extends Node {
 
   ///
   //2.3.1 ok
-  Element(combinator, value, int this.index, FileInfo this.currentFileInfo) {
+  Element(combinator, value, this.index, this.currentFileInfo) {
     this.combinator = (combinator is Combinator) ? combinator : new Combinator(combinator);
 
     if (value is String) {
@@ -41,9 +41,9 @@ class Element extends Node {
   ///
   //2.3.1 ok
   void accept(Visitor visitor) {
-    var value = this.value;
-    this.combinator = visitor.visit(this.combinator);
-    if (value is Node) this.value = visitor.visit(value);
+    var _value = value;
+    combinator = visitor.visit(combinator);
+    if (_value is Node) value = visitor.visit(_value);
 
 //2.3.1
 //  Element.prototype.accept = function (visitor) {
@@ -58,10 +58,10 @@ class Element extends Node {
   ///
   //2.3.1 ok
   Element eval(Contexts context) => new Element(
-                        this.combinator,
-                        (this.value is Node) ? this.value.eval(context) : this.value,
-                        this.index,
-                        this.currentFileInfo);
+                        combinator,
+                        (value is Node) ? value.eval(context) : value,
+                        index,
+                        currentFileInfo);
 
   //2.3.1
 //  Element.prototype.eval = function (context) {
@@ -74,7 +74,7 @@ class Element extends Node {
   ///
   //2.3.1 ok
   void genCSS(Contexts context, Output output) {
-    output.add(this.toCSS(context), this.currentFileInfo, this.index);
+    output.add(toCSS(context), currentFileInfo, index);
 
 //2.3.1
 //  Element.prototype.genCSS = function (context, output) {
@@ -88,21 +88,21 @@ class Element extends Node {
   //2.3.1 ok
   String toCSS(Contexts context) {
     if (context == null) context = new Contexts();
-    var value = this.value;
+    var _value = value;
     bool firstSelector = context.firstSelector;
 
-    if (value is Paren) {
+    if (_value is Paren) {
       // selector in parens should not be affected by outer selector
       // flags (breaks only interpolated selectors - see #1973)
       context.firstSelector = true;
     }
 
-    value = (value is Node) ? value.toCSS(context) : value;
+    _value = (_value is Node) ? _value.toCSS(context) : _value;
     context.firstSelector = firstSelector;
-    if (value.isEmpty && this.combinator.value.startsWith('&')) {
+    if (_value.isEmpty && combinator.value.startsWith('&')) {
       return '';
     } else {
-      return this.combinator.toCSS(context) + value;
+      return combinator.toCSS(context) + _value;
     }
 
 //2.3.1
