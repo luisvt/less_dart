@@ -1,4 +1,4 @@
-//source: less/tree/dimension.js 2.3.1
+//source: less/tree/dimension.js 2.4.0
 
 part of tree.less;
 
@@ -10,7 +10,6 @@ class Unit extends Node implements CompareNode {
   final String type = 'Unit';
 
   ///
-  //2.3.1 ok
   Unit([List numerator = const [], List denominator = const [], this.backupUnit = null]) {
    this.numerator = numerator.sublist(0)..sort(); //clone
    this.denominator = denominator.sublist(0)..sort();
@@ -31,7 +30,6 @@ class Unit extends Node implements CompareNode {
   }
 
   ///
-  //2.3.1 ok
   Unit clone()=> new Unit(this.numerator.sublist(0),
                           this.denominator.sublist(0),
                           this.backupUnit);
@@ -42,7 +40,6 @@ class Unit extends Node implements CompareNode {
 //  };
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
     // Dimension checks the unit is singular and throws an error if in strict math mode.
     bool stricUnits = (context != null && context.strictUnits != null) ? context.strictUnits : false;
@@ -51,9 +48,11 @@ class Unit extends Node implements CompareNode {
       output.add(this.numerator[0]); // the ideal situation
     } else if (!stricUnits && this.backupUnit != null) {
       output.add(this.backupUnit);
+    } else if (!stricUnits && this.denominator.isNotEmpty) {
+      output.add(this.denominator[0]);
     }
 
-//2.3.1
+//2.4.0
 //  Unit.prototype.genCSS = function (context, output) {
 //      // Dimension checks the unit is singular and throws an error if in strict math mode.
 //      var strictUnits = context && context.strictUnits;
@@ -61,12 +60,13 @@ class Unit extends Node implements CompareNode {
 //          output.add(this.numerator[0]); // the ideal situation
 //      } else if (!strictUnits && this.backupUnit) {
 //          output.add(this.backupUnit);
+//      } else if (!strictUnits && this.denominator.length) {
+//          output.add(this.denominator[0]);
 //      }
 //  };
   }
 
   ///
-  //2.3.1 ok
   String toString() {
     String returnStr = this.numerator.join('*');
     for (int i = 0; i < this.denominator.length; i++) {
@@ -87,7 +87,6 @@ class Unit extends Node implements CompareNode {
   //--- CompareNode
 
   /// Returns -1 for different, 0 for equal
-  //2.3.1 ok
   int compare(Node other) => this.isUnit(other.toString()) ? 0 : null;
 
 //2.3.1
@@ -97,7 +96,6 @@ class Unit extends Node implements CompareNode {
 
   ///
   //is in js
-  //2.3.1 ok.
   bool isUnit(String unitString)
     => this.toString().toUpperCase() == unitString.toUpperCase();
 
@@ -107,7 +105,6 @@ class Unit extends Node implements CompareNode {
 //  };
 
   ///
-  //2.3.1 ok
   bool isLength(Contexts context) {
     RegExp re = new RegExp(r'px|em|%|in|cm|mm|pc|pt|ex'); //i?
     return re.hasMatch(this.toCSS(context));
@@ -121,7 +118,6 @@ class Unit extends Node implements CompareNode {
   ///
   /// True if numerator & denominator isEmpty
   ///
-  //2.3.1 ok
   bool isEmpty() => this.numerator.isEmpty && this.denominator.isEmpty;
 
 //2.3.1
@@ -130,7 +126,6 @@ class Unit extends Node implements CompareNode {
 //  };
 
   ///
-  //2.3.1 ok
   bool isSingular() => (this.numerator.length <= 1 && this.denominator.isEmpty);
 
 //2.3.1
@@ -143,7 +138,6 @@ class Unit extends Node implements CompareNode {
   /// String callback(String unit, bool isDenominator)
   /// callback returns new unit
   ///
-  //2.3.1 ok
   void map(Function callback) {
     int i;
 
@@ -170,7 +164,6 @@ class Unit extends Node implements CompareNode {
   }
 
   ///
-  //2.3.1 ok
   Map usedUnits() {
     Map<String, double> group;
     Map<String, String> result = {};
@@ -221,7 +214,6 @@ class Unit extends Node implements CompareNode {
   ///
   /// Normalize numerator and denominator after operations
   ///
-  //2.3.1 ok
   void cancel() {
     Map<String, int> counter = {};
     String atomicUnit;

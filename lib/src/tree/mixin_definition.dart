@@ -1,8 +1,8 @@
-//source: tree/mixin-definition.js 2.3.1
+//source: tree/mixin-definition.js 2.4.0
 
 part of tree.less;
 
-class MixinDefinition extends Node with VariableMixin implements MatchConditionNode {
+class MixinDefinition extends Node with VariableMixin implements MakeImportantNode, MatchConditionNode {
   /// Same as Selector
   String name;
 
@@ -27,7 +27,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
 
   var frames;
 
-
   /// Number of params
   int arity;
 
@@ -44,7 +43,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
 
   /// name, params, rules, condition, variadic, index, currentFileInfo, frames
   //index, currentFileInfo not in original. See order when calling with frames.
-  //2.3.1 ok
   MixinDefinition(String this.name, List<MixinArgs> this.params,
       List<Node> this.rules, Node this.condition, bool this.variadic,
       int this.index, FileInfo this.currentFileInfo, [this.frames]) {
@@ -53,8 +51,11 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
     this.arity = this.params.length;
 
     this.required = params.fold(0, (count , p){
-      if (p.name == null || (p.name != null && p.value == null)) { return count + 1; }
-      else { return count; }
+      if (p.name == null || (p.name != null && p.value == null)) {
+        return count + 1;
+      } else {
+        return count;
+      }
     });
 
     //this._lookups = {}; //inside VariableMixin
@@ -78,7 +79,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
   }
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor) {
     if (this.params != null && this.params.isNotEmpty) {
       this.params = visitor.visitArray(this.params);
@@ -118,7 +118,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
   /// Build a Ruleset where the rules are the mixin params evaluated
   /// Build evaldArguments
   ///
-  //2.3.1 ok
   Ruleset evalParams(Contexts context, Contexts mixinEnv, List<MixinArgs> args, List evaldArguments) {
     Ruleset frame = new Ruleset(null, null);
     List<Node> varargs;
@@ -296,8 +295,39 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
 //  };
   }
 
+  // ---- begin MakeImportantNode
+
   ///
-  //2.3.1 ok
+  MixinDefinition makeImportant() {
+    List<Node> rules = (this.rules == null)
+        ? this.rules
+        : this.rules.map((r){
+          if (r is MakeImportantNode) {
+            return r.makeImportant();
+          } else {
+            return r;
+          }
+        }).toList();
+    return new MixinDefinition(this.name, this.params, rules, this.condition,
+        this.variadic, this.index, this.currentFileInfo, this.frames);
+
+//2.4.0
+//  Definition.prototype.makeImportant = function() {
+//      var rules = !this.rules ? this.rules : this.rules.map(function (r) {
+//          if (r.makeImportant) {
+//              return r.makeImportant(true);
+//          } else {
+//              return r;
+//          }
+//      });
+//      var result = new Definition (this.name, this.params, rules, this.condition, this.variadic, this.frames);
+//      return result;
+//  };
+  }
+
+  // ---- end MakeImportantNode
+
+  ///
   MixinDefinition eval(Contexts context) {
     var frames = (this.frames != null) ? this.frames : context.frames.sublist(0);
     return new MixinDefinition(this.name, this.params, this.rules, this.condition,
@@ -310,7 +340,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
   }
 
   ///
-  //2.3.1 ok
   Ruleset evalCall(Contexts context, List<MixinArgs> args, bool important) {
     List _arguments = [];
     List<Node> mixinFrames = (this.frames != null) ? (this.frames.sublist(0)..addAll(context.frames)) : context.frames;
@@ -328,11 +357,10 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
     ruleset = ruleset.eval(new Contexts.eval(context, [this, frame]..addAll(mixinFrames)));
     if (important) {
       ruleset = ruleset.makeImportant();
-      //ruleset = this.makeImportant.apply(ruleset);
     }
     return ruleset;
 
-//2.3.1
+//2.4.0
 //  Definition.prototype.evalCall = function (context, args, important) {
 //      var _arguments = [],
 //          mixinFrames = this.frames ? this.frames.concat(context.frames) : context.frames,
@@ -347,7 +375,7 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
 //      ruleset.originalRuleset = this;
 //      ruleset = ruleset.eval(new contexts.Eval(context, [this, frame].concat(mixinFrames)));
 //      if (important) {
-//          ruleset = this.makeImportant.apply(ruleset);
+//          ruleset = ruleset.makeImportant();
 //      }
 //      return ruleset;
 //  };
@@ -356,7 +384,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
   //--- MatchConditionNode
 
   ///
-  //2.3.1 ok
   bool matchCondition(List<MixinArgs> args, Contexts context) {
     List thisFrames = (this.frames != null) ? (this.frames.sublist(0)..addAll(context.frames)) : context.frames;
     List frames = [this.evalParams(context, new Contexts.eval(context, thisFrames), args, [])] // the parameter variables
@@ -382,7 +409,6 @@ class MixinDefinition extends Node with VariableMixin implements MatchConditionN
   ///
   /// Check arguments call is according mixin definition
   ///
-  //2.3.1 ok
   bool matchArgs(List<MixinArgs> args, Contexts context) {
     int argsLength = 0;
     if (args != null) argsLength = args.length;

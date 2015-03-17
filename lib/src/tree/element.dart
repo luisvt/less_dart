@@ -1,4 +1,4 @@
-//source: less/tree/element.js 2.3.1
+//source: less/tree/element.js 2.4.0
 
 part of tree.less;
 
@@ -11,7 +11,6 @@ class Element extends Node {
   final String type = 'Element';
 
   ///
-  //2.3.1 ok
   Element(combinator, value, this.index, this.currentFileInfo) {
     this.combinator = (combinator is Combinator) ? combinator : new Combinator(combinator);
 
@@ -39,7 +38,6 @@ class Element extends Node {
   }
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor) {
     var _value = value;
     combinator = visitor.visit(combinator);
@@ -56,7 +54,6 @@ class Element extends Node {
   }
 
   ///
-  //2.3.1 ok
   Element eval(Contexts context) => new Element(
                         combinator,
                         (value is Node) ? value.eval(context) : value,
@@ -72,7 +69,6 @@ class Element extends Node {
 //  };
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
     output.add(toCSS(context), currentFileInfo, index);
 
@@ -85,7 +81,6 @@ class Element extends Node {
   ///
   /// Converts value to String: Combinator + value
   ///
-  //2.3.1 ok
   String toCSS(Contexts context) {
     if (context == null) context = new Contexts();
     var _value = value;

@@ -1,3 +1,5 @@
+//2.4.0+7
+
 import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as path;
@@ -94,54 +96,56 @@ void runAsync() {
        0: def('charsets'), //@import
        1: def('colors'),
        2: def('comments'),
-       //3: def('comments2'), //TODO pending upgrade 2.2.0 Ruleset.eval and parserInput.start()
-       4: def('css-3'), //TODO 2.2.0
-       5: def('css-escapes'),
-       6: def('css-guards'),
-       7: def('css'),
+       3: def('comments2', options: ['--strict-math=on']),
+       4: def('css'),
+       5: def('css-3'),
+       6: def('css-escapes'),
+       7: def('css-guards'),
        8: def('detached-rulesets'),
-       9: def('empty'),
-      10: def('extend-chaining'),
-      11: def('extend-clearfix'),
-      12: def('extend-exact'),
-      13: def('extend-media'),
-      14: def('extend-nest'),
-      15: def('extend-selector'),
-      16: def('extend'),
-      17: def('extract-and-length'),
-      18: def('functions'),
-      19: def('ie-filters'),
-      20: def('import-inline'),
-      21: def('import-interpolation'),
-      22: def('import-once'),
-      23: def('import-reference'),
-      24: def('import'), //TODO 2.2.0
-      //25: def('javascript'),
+       9: def('directives-bubling'),
+      10: def('empty'),
+      11: def('extend', options: ['--log-level=1']),
+      12: def('extend-chaining', options: ['--log-level=1']),
+      13: def('extend-clearfix'),
+      14: def('extend-exact', options: ['--log-level=1']),
+      15: def('extend-media'),
+      16: def('extend-nest', options: ['--log-level=1']),
+      17: def('extend-selector'),
+      18: def('extract-and-length'),
+      19: def('functions'),
+      20: def('ie-filters'),
+      21: def('import'),
+      22: def('import-inline'),
+      23: def('import-interpolation'),
+      24: def('import-once'),
+      25: def('import-reference', options: ['--log-level=1']),
+      //26: def('javascript'),
       30: def('lazy-eval'),
       31: def('media'),
       32: def('merge'),
-      33: def('mixins-args'),
-      34: def('mixins-closure'),
-      35: def('mixins-guards-default-func'),
-      36: def('mixins-guards'), //TODO 2.2.0
-      37: def('mixins-important'),
-      38: def('mixins-interpolated'),
-      39: def('mixins-named-args'),
-      40: def('mixins-nested'),
-      41: def('mixins-pattern'),
-      42: def('mixins'),
+      33: def('mixins'),
+      34: def('mixins-args', options: ['--strict-math=on']),
+      35: def('mixins-closure'),
+      36: def('mixins-guards'),
+      37: def('mixins-guards-default-func'),
+      38: def('mixins-important'),
+      39: def('mixins-interpolated'),
+      40: def('mixins-named-args'),
+      41: def('mixins-nested'),
+      42: def('mixins-pattern'),
       43: def('no-output'),
       44: def('operations'),
-      45: def('parens'), //TODO 2.2.0
+      45: def('parens', options: ['--strict-math=on']),
       46: def('property-name-interp'),
       47: def('rulesets'),
       48: def('scope'),
-      49: def('selectors'), //TODO 2.2.0
-      50: def('strings'), //TODO 2.2.0
-      51: def('urls', options: ['--silent']),
-      52: def('variables-in-at-rules'),
-      53: def('variables'),
+      49: def('selectors'),
+      50: def('strings'),
+      51: def('urls', options: ['--relative-urls', '--silent']),
+      52: def('variables'),
+      53: def('variables-in-at-rules'),
       54: def('whitespace'),
+      55: def('strict-units/strict-units', options: ['--strict-math=on', '--strict-units=on']),
 
       // compression
       60: def('compression/compression', options: ['-x']),
@@ -195,8 +199,20 @@ void runAsync() {
 
       //sourcemaps
       70: def('index', isExtendedTest: true,
-          isSourcemapTest: true, cssName: 'index_expected',
+          isSourcemapTest: true, cssName: 'index-expected',
           options: ['--source-map=webSourceMap/index.map', '--banner=webSourceMap/banner.txt']),
+      71: def('index-less-inline', isExtendedTest: true,
+          isSourcemapTest: true, cssName: 'index-less-inline-expected',
+          options: ['--source-map=webSourceMap/index-less-inline.map', '--source-map-less-inline',
+                    '--banner=webSourceMap/banner.txt']),
+      72: def('index-map-inline', isExtendedTest: true,
+          isSourcemapTest: true, cssName: 'index-map-inline-expected',
+          options: ['--source-map-map-inline', '--banner=webSourceMap/banner.txt']),
+      73: def('sourcemaps-empty/empty', options: ['--source-map-map-inline']),
+
+      //include-path
+      80: def('include-path/include-path',
+          options: ['--include-path=less/import;data']),
 
       //errors
       100: def('errors/add-mixed-units', isErrorTest: true),
@@ -211,7 +227,6 @@ void runAsync() {
       109: def('errors/detached-ruleset-1', isErrorTest: true),
       110: def('errors/detached-ruleset-2', isErrorTest: true),
       111: def('errors/detached-ruleset-3', isErrorTest: true),
-      112: def('errors/detached-ruleset-4', isErrorTest: true),
       113: def('errors/detached-ruleset-5', isErrorTest: true),
       114: def('errors/detached-ruleset-6', isErrorTest: true),
       115: def('errors/divide-mixed-units', isErrorTest: true),
@@ -252,16 +267,35 @@ void runAsync() {
       150: def('errors/property-in-root3', isErrorTest: true),
       151: def('errors/property-interp-not-defined', isErrorTest: true),
       152: def('errors/recursive-variable', isErrorTest: true),
-      153: def('errors/svg-gradient1', isErrorTest: true),
-      154: def('errors/svg-gradient2', isErrorTest: true),
-      155: def('errors/svg-gradient3', isErrorTest: true),
-      156: def('errors/unit-function', isErrorTest: true),
-      200: def('extendedTest/url', isExtendedTest: true)
+      153: def('errors/single-character', isErrorTest: true),
+      154: def('errors/svg-gradient1', isErrorTest: true),
+      155: def('errors/svg-gradient2', isErrorTest: true),
+      156: def('errors/svg-gradient3', isErrorTest: true),
+      157: def('errors/svg-gradient4', isErrorTest: true),
+      158: def('errors/svg-gradient5', isErrorTest: true),
+      159: def('errors/svg-gradient6', isErrorTest: true),
+      160: def('errors/unit-function', isErrorTest: true),
+      //
+      200: def('extendedTest/svg', isExtendedTest: true),
+      201: def('extendedTest/url', isExtendedTest: true),
+      202: def('extendedTest/image-size', isExtendedTest: true),
+      //absolute path
+      210: def('import-absolute-path', isExtendedTest: true, isReplaceSource: true,
+          replace: [{'from': '{pathabs}', 'to': absPath('less')}]),
+      //sync import
+      211: def('charsets', isExtendedTest: true, modifyOptions: (LessOptions options){options.syncImport = true;}),
+      //options.variables
+      212: def('globalVars/simple', isExtendedTest: true,
+                options: ['--banner=banner.txt'],
+                modifyOptions: (LessOptions options){options.variables = { 'my-color': new Color.fromKeyword('red') };}),
+      213: def('extendedTest/plugin-advanced-color', isExtendedTest: true,
+          options: ['--plugin=less-plugin-advanced-color-functions'])
     };
   }
 
   Config def(name, {List options, String cssName, List<Map> replace,
-    bool isErrorTest: false, bool isExtendedTest: false, bool isSourcemapTest: false}) {
+    bool isErrorTest: false, bool isExtendedTest: false, bool isReplaceSource: false,
+    bool isSourcemapTest: false, Function modifyOptions}) {
 
     String baseLess = 'less'; //base directory for less sources
     String baseCss = 'css';   //base directory for css comparation
@@ -288,7 +322,9 @@ void runAsync() {
       ..replace = replace
       ..isErrorTest = isErrorTest
       ..isExtendedText = isExtendedTest
-      ..isSourcemapTest = isSourcemapTest;
+      ..isReplaceSource = isReplaceSource
+      ..isSourcemapTest = isSourcemapTest
+      ..modifyOptions = modifyOptions;
   }
 
   String escFile(String fileName) {
@@ -315,12 +351,25 @@ void runAsync() {
 
     args.add('-no-color');
     if (config[c].options != null) args.addAll(config[c].options);
-    args.add(fileToTest);
+
+    if (config[c].isReplaceSource) {
+      String source = new File(fileToTest).readAsStringSync();
+      if (config[c].replace != null ) {
+        for (int i = 0; i < config[c].replace.length; i++) {
+          source = source.replaceAll(config[c].replace[i]['from'], config[c].replace[i]['to']);
+        }
+      }
+      less.stdin.write(source);
+      args.add('-');
+    } else {
+      args.add(fileToTest);
+    }
+
     if(config[c].isSourcemapTest){
       fileOutputName = path.withoutExtension(config[c].lessFile) + '.css';
       args.add(fileOutputName);
     }
-    less.transform(args).then((exitCode){
+    less.transform(args, modifyOptions: config[c].modifyOptions).then((exitCode){
       config[c].stderr = less.stderr.toString();
 
       if (exitCode == 3) { // input file error
@@ -340,11 +389,15 @@ void runAsync() {
         }
         String mapFileName = path.withoutExtension(config[c].lessFile) + '.map';
         String expectedMapFileName = path.withoutExtension(config[c].cssFile) + '.map';
-        String resultMap = new File(mapFileName).readAsStringSync();
-        new File(expectedMapFileName).readAsString().then((expectedMap){
-          if (resultMap != expectedMap) config[c].pass = false;
+        if (new File(mapFileName).existsSync()) {
+          String resultMap = new File(mapFileName).readAsStringSync();
+          new File(expectedMapFileName).readAsString().then((expectedMap){
+            if (resultMap != expectedMap) config[c].pass = false;
+            completer.complete();
+          });
+        } else {
           completer.complete();
-        });
+        }
       } else if (config[c].isErrorTest) {
         new File(fileError).readAsString().then((errorContent){
           String errorContentReplaced = errorContent;
@@ -427,8 +480,10 @@ void runAsync() {
     String errorFile;
     bool isErrorTest;
     bool isExtendedText;
+    bool isReplaceSource;
     bool isSourcemapTest;
     String lessFile;
+    Function modifyOptions; // (LessOptions options){}
     List<String> options;
     bool pass;
     List<Map<String, String>> replace;

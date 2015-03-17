@@ -1,4 +1,4 @@
-// source: less/tree/ruleset.js 2.3.1
+// source: less/tree/ruleset.js 2.4.0
 
 part of tree.less;
 
@@ -28,7 +28,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   Ruleset(this.selectors, this.rules, [this.strictImports = false]);
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor){
     if (this.paths != null) {
       visitor.visitArray(this.paths, true);
@@ -53,10 +52,7 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
 //  };
   }
 
-  // ********************************* entry point ***********************************
-
   ///
-  //2.3.1 ok
   eval(Contexts context) {
     List<Selector> thisSelectors = this.selectors;
     List<Selector> selectors;
@@ -345,7 +341,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   ///
   /// Analyze the rules for @import, loading the new nodes
   ///
-  //2.3.1 ok
   void evalImports(Contexts context) {
     List<Node> rules = this.rules;
     List<Node> importRules;
@@ -384,32 +379,32 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   Ruleset makeImportant(){
-    this.rules = this.rules.map((r){
+    Ruleset result = new Ruleset(this.selectors, this.rules.map((r){
       if (r is MakeImportantNode) {
         return r.makeImportant();
       } else {
         return r;
       }
-    }).toList();
-    return this;
+    }).toList(), this.strictImports);
 
-//2.3.1
+    return result;
+
+//2.4.0
 //  Ruleset.prototype.makeImportant = function() {
-//      this.rules = this.rules.map(function (r) {
+//      var result = new Ruleset(this.selectors, this.rules.map(function (r) {
 //          if (r.makeImportant) {
 //              return r.makeImportant();
 //          } else {
 //              return r;
 //          }
-//      });
-//      return this;
+//      }), this.strictImports);
+//
+//      return result;
 //  };
   }
 
   ///
-  //2.3.1 ok
   bool matchArgs(List<MixinArgs> args, Contexts context) => (args == null || args.isEmpty);
 
 //2.3.1
@@ -422,7 +417,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   ///
   /// lets you call a css selector with a guard
   ///
-  //2.3.1 ok
   bool matchCondition(List<MixinArgs>args, Contexts context) {
     Selector lastSelector = this.selectors.last;
     if (!lastSelector.evaldCondition) return false;
@@ -451,7 +445,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   ///
   /// Inserts the [rule] as the first elements of this.rules
   ///
-  //2.3.1 ok
   void prependRule(Node rule) {
     List<Node> rules = this.rules;
     if (rules != null) {
@@ -468,7 +461,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
     int i;
     int j;
@@ -476,9 +468,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
     List<Node> ruleNodes = [];
     List<Node> rulesetNodes = [];
     int rulesetNodeCnt;
-
-    /// Line number debugging
-    //LessDebugInfo debugInfo;
 
     Node rule;
     List path;
@@ -715,7 +704,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   //--- MarkReferencedNode
 
   ///
-  //2.3.1 ok
   void markReferenced(){
     if (this.selectors != null) {
       for (int s = 0; s < this.selectors.length; s++) {
@@ -751,7 +739,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   bool getIsReferenced() {
     List<Selector> path;
     Selector selector;
@@ -806,7 +793,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   joinSelectors(List<List<Selector>> paths, List<List<Selector>> context, List<Node> selectors) {
     for (int s = 0; s < selectors.length; s++) {
       joinSelector(paths, context, selectors[s]);
@@ -821,7 +807,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   joinSelector(List<List<Selector>> paths, List<List<Selector>>context, Selector selector) {
     List<List<Selector>> newPaths = [];
     bool hadParentSelector = replaceParentSelector(newPaths, context, selector);
@@ -870,12 +855,11 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 TODO test
   Paren createParenthesis(List<Node> elementsToPak, Element originalElement) {
     Paren replacementParen;
 
-    if (elementsToPak.length == 1) { // 0?
-      replacementParen = new Paren(elementsToPak[0]); // TODO test
+    if (elementsToPak.length == 0) {
+      replacementParen = new Paren(null);
     } else {
       List  insideParent = [];
       for (int j = 0; j < elementsToPak.length; j++) {
@@ -902,7 +886,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   Selector createSelector(Node containedElement, Element originalElement) {
     Element element = new Element(null, containedElement, originalElement.index, originalElement.currentFileInfo);
     Selector selector = new Selector([element]);
@@ -922,7 +905,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   /// resulting selectors are returned inside `paths` array
   /// returns true if `inSelector` contained at least one parent selector
   ///
-  //2.3.1
   bool replaceParentSelector(List<List<Selector>> paths, List<List<Selector>> context, Selector inSelector) {
     //
     // The paths are [[Selector]]
@@ -942,10 +924,12 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
     List<Selector> sel;
     Element el;
     bool hadParentSelector = false;
+    int length;
+    Selector lastSelector;
 
     Selector findNestedSelector(Element element) {
       if (element.value is String) return null;
-      if (element.value is Paren) return null;
+      if (element.value is! Paren) return null;
 
       var maybeSelector = element.value.value;
       if (maybeSelector is! Selector) return null;
@@ -1033,124 +1017,132 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
     mergeElementsOnToSelectors(currentElements, newSelectors);
 
     for (int i = 0; i < newSelectors.length; i++) {
-      if (newSelectors[i].isNotEmpty) paths.add(newSelectors[i]);
+      length = newSelectors[i].length;
+      if (length > 0) {
+        paths.add(newSelectors[i]);
+        lastSelector = newSelectors[i].last;
+        newSelectors[i][length - 1] = lastSelector.createDerived(lastSelector.elements, inSelector.extendList);
+      }
     }
 
     return hadParentSelector;
 
-//2.3.1 inside joinSelector
-//      function replaceParentSelector(paths, context, inSelector) {
-//          // The paths are [[Selector]]
-//          // The first list is a list of comma separated selectors
-//          // The inner list is a list of inheritance separated selectors
-//          // e.g.
-//          // .a, .b {
-//          //   .c {
-//          //   }
-//          // }
-//          // == [[.a] [.c]] [[.b] [.c]]
-//          //
-//          var i, j, k, currentElements, newSelectors, selectorsMultiplied, sel, el, hadParentSelector = false;
-//          function findNestedSelector(element) {
-//              var maybeSelector;
-//              if (element.value.type !== 'Paren') {
-//                  return null;
-//              }
-//
-//              maybeSelector = element.value.value;
-//              if (maybeSelector.type !== 'Selector') {
-//                  return null;
-//              }
-//
-//              return maybeSelector;
+//2.4.0
+//  function replaceParentSelector(paths, context, inSelector) {
+//      // The paths are [[Selector]]
+//      // The first list is a list of comma separated selectors
+//      // The inner list is a list of inheritance separated selectors
+//      // e.g.
+//      // .a, .b {
+//      //   .c {
+//      //   }
+//      // }
+//      // == [[.a] [.c]] [[.b] [.c]]
+//      //
+//      var i, j, k, currentElements, newSelectors, selectorsMultiplied, sel, el, hadParentSelector = false, length, lastSelector;
+//      function findNestedSelector(element) {
+//          var maybeSelector;
+//          if (element.value.type !== 'Paren') {
+//              return null;
 //          }
 //
-//          // the elements from the current selector so far
-//          currentElements = [];
-//          // the current list of new selectors to add to the path.
-//          // We will build it up. We initiate it with one empty selector as we "multiply" the new selectors
-//          // by the parents
-//          newSelectors = [
-//              []
-//          ];
+//          maybeSelector = element.value.value;
+//          if (maybeSelector.type !== 'Selector') {
+//              return null;
+//          }
 //
-//          for (i = 0; i < inSelector.elements.length; i++) {
-//              el = inSelector.elements[i];
-//              // non parent reference elements just get added
-//              if (el.value !== "&") {
-//                  var nestedSelector = findNestedSelector(el);
-//                  if (nestedSelector != null) {
-//                      // merge the current list of non parent selector elements
-//                      // on to the current list of selectors to add
-//                      mergeElementsOnToSelectors(currentElements, newSelectors);
+//          return maybeSelector;
+//      }
 //
-//                      var nestedPaths = [], replaced, replacedNewSelectors = [];
-//                      replaced = replaceParentSelector(nestedPaths, context, nestedSelector);
-//                      hadParentSelector = hadParentSelector || replaced;
-//                      //the nestedPaths array should have only one member - replaceParentSelector does not multiply selectors
-//                      for (k = 0; k < nestedPaths.length; k++) {
-//                          var replacementSelector = createSelector(createParenthesis(nestedPaths[k], el), el);
-//                          addAllReplacementsIntoPath(newSelectors, [replacementSelector], el, inSelector, replacedNewSelectors);
-//                      }
-//                      newSelectors = replacedNewSelectors;
-//                      currentElements = [];
+//      // the elements from the current selector so far
+//      currentElements = [];
+//      // the current list of new selectors to add to the path.
+//      // We will build it up. We initiate it with one empty selector as we "multiply" the new selectors
+//      // by the parents
+//      newSelectors = [
+//          []
+//      ];
 //
-//                  } else {
-//                      currentElements.push(el);
-//                  }
-//
-//              } else {
-//                  hadParentSelector = true;
-//                  // the new list of selectors to add
-//                  selectorsMultiplied = [];
-//
+//      for (i = 0; i < inSelector.elements.length; i++) {
+//          el = inSelector.elements[i];
+//          // non parent reference elements just get added
+//          if (el.value !== "&") {
+//              var nestedSelector = findNestedSelector(el);
+//              if (nestedSelector != null) {
 //                  // merge the current list of non parent selector elements
 //                  // on to the current list of selectors to add
 //                  mergeElementsOnToSelectors(currentElements, newSelectors);
 //
-//                  // loop through our current selectors
-//                  for (j = 0; j < newSelectors.length; j++) {
-//                      sel = newSelectors[j];
-//                      // if we don't have any parent paths, the & might be in a mixin so that it can be used
-//                      // whether there are parents or not
-//                      if (context.length === 0) {
-//                          // the combinator used on el should now be applied to the next element instead so that
-//                          // it is not lost
-//                          if (sel.length > 0) {
-//                              sel[0].elements.push(new Element(el.combinator, '', el.index, el.currentFileInfo));
-//                          }
-//                          selectorsMultiplied.push(sel);
+//                  var nestedPaths = [], replaced, replacedNewSelectors = [];
+//                  replaced = replaceParentSelector(nestedPaths, context, nestedSelector);
+//                  hadParentSelector = hadParentSelector || replaced;
+//                  //the nestedPaths array should have only one member - replaceParentSelector does not multiply selectors
+//                  for (k = 0; k < nestedPaths.length; k++) {
+//                      var replacementSelector = createSelector(createParenthesis(nestedPaths[k], el), el);
+//                      addAllReplacementsIntoPath(newSelectors, [replacementSelector], el, inSelector, replacedNewSelectors);
+//                  }
+//                  newSelectors = replacedNewSelectors;
+//                  currentElements = [];
+//
+//              } else {
+//                  currentElements.push(el);
+//              }
+//
+//          } else {
+//              hadParentSelector = true;
+//              // the new list of selectors to add
+//              selectorsMultiplied = [];
+//
+//              // merge the current list of non parent selector elements
+//              // on to the current list of selectors to add
+//              mergeElementsOnToSelectors(currentElements, newSelectors);
+//
+//              // loop through our current selectors
+//              for (j = 0; j < newSelectors.length; j++) {
+//                  sel = newSelectors[j];
+//                  // if we don't have any parent paths, the & might be in a mixin so that it can be used
+//                  // whether there are parents or not
+//                  if (context.length === 0) {
+//                      // the combinator used on el should now be applied to the next element instead so that
+//                      // it is not lost
+//                      if (sel.length > 0) {
+//                          sel[0].elements.push(new Element(el.combinator, '', el.index, el.currentFileInfo));
 //                      }
-//                      else {
-//                          // and the parent selectors
-//                          for (k = 0; k < context.length; k++) {
-//                              // We need to put the current selectors
-//                              // then join the last selector's elements on to the parents selectors
-//                              var newSelectorPath = addReplacementIntoPath(sel, context[k], el, inSelector);
-//                              // add that to our new set of selectors
-//                              selectorsMultiplied.push(newSelectorPath);
-//                          }
+//                      selectorsMultiplied.push(sel);
+//                  }
+//                  else {
+//                      // and the parent selectors
+//                      for (k = 0; k < context.length; k++) {
+//                          // We need to put the current selectors
+//                          // then join the last selector's elements on to the parents selectors
+//                          var newSelectorPath = addReplacementIntoPath(sel, context[k], el, inSelector);
+//                          // add that to our new set of selectors
+//                          selectorsMultiplied.push(newSelectorPath);
 //                      }
 //                  }
-//
-//                  // our new selectors has been multiplied, so reset the state
-//                  newSelectors = selectorsMultiplied;
-//                  currentElements = [];
 //              }
+//
+//              // our new selectors has been multiplied, so reset the state
+//              newSelectors = selectorsMultiplied;
+//              currentElements = [];
 //          }
-//
-//          // if we have any elements left over (e.g. .a& .b == .b)
-//          // add them on to all the current selectors
-//          mergeElementsOnToSelectors(currentElements, newSelectors);
-//
-//          for (i = 0; i < newSelectors.length; i++) {
-//              if (newSelectors[i].length > 0) {
-//                  paths.push(newSelectors[i]);
-//              }
-//          }
-//
-//          return hadParentSelector;
 //      }
+//
+//      // if we have any elements left over (e.g. .a& .b == .b)
+//      // add them on to all the current selectors
+//      mergeElementsOnToSelectors(currentElements, newSelectors);
+//
+//      for (i = 0; i < newSelectors.length; i++) {
+//          length = newSelectors[i].length;
+//          if (length > 0) {
+//              paths.push(newSelectors[i]);
+//              lastSelector = newSelectors[i][length - 1];
+//              newSelectors[i][length - 1] = lastSelector.createDerived(lastSelector.elements, inSelector.extendList);
+//          }
+//      }
+//
+//      return hadParentSelector;
+//  }
   }
 
   ///
@@ -1158,7 +1150,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   /// `replacedElement` contains element that is being replaced by `addPath`
   /// returns concatenated path
   ///
-  //2.3.1
   addReplacementIntoPath(List<Selector> beginningPath, List<Selector> addPath, Element replacedElement, Selector originalSelector) {
     List<Selector> newSelectorPath;
     Selector lastSelector;
@@ -1256,7 +1247,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   /// `replacedElement` contains element that is being replaced by `addPath`
   /// returns array with all concatenated paths
   ///
-  //2.3.1
   List addAllReplacementsIntoPath( List beginningPath, addPaths, replacedElement, originalSelector, List result) {
     for (int j = 0; j < beginningPath.length; j++) {
       List<Selector> newSelectorPath = addReplacementIntoPath(beginningPath[j], addPaths, replacedElement, originalSelector);
@@ -1279,7 +1269,6 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
   }
 
   ///
-  //2.3.1 ok
   void mergeElementsOnToSelectors(List<Element> elements, List<List<Selector>> selectors) {
     List<Selector> sel;
 
@@ -1329,252 +1318,14 @@ class Ruleset extends Node with VariableMixin implements GetIsReferencedNode, Ma
 
   // -----------------------------------------------------------------------
 
-  //parser.js 1.7.5 lines 514-627
-  /// Main entry to convert the tree to CSS
-  String rootToCSS(LessOptions options, Contexts env, [Map<String, Node> variables]) {
-    String css;
-    var evaldRoot; //Ruleset or source_map_output
-    Node evaluate = this;
-    int i;
-    if (options == null) options = new LessOptions();
-
-    Contexts evalEnv = new Contexts.eval(options);
-
-    // Allows setting variables with a hash, so:
-    //
-    // variables = {'my-color': new Color('ff0000')}; will become:
-    //
-    //   new Rule('@my-color',
-    //     new Value([
-    //       new Expression)([
-    //         new Color('ff0000')
-    //       ])
-    //     ])
-    //   )
-
-    if (variables != null) {
-      List<Node> vars = [];
-      Node value;
-      for (String k in variables.keys) {
-        value = variables[k];
-        if (value is! Value) {
-          if (value is! Expression) value = new Expression([value]);
-          value = new Value([value]);
-        }
-        vars.add(new Rule('@' + k, value, null, null, 0));
-      }
-      evalEnv.frames = [new Ruleset(null, vars)];
-    }
-
-    try {
-      List<VisitorBase> preEvalVisitors = [];
-      List<VisitorBase> visitors = [
-                       new JoinSelectorVisitor(),
-                       new ProcessExtendsVisitor(),
-                       new ToCSSVisitor(new Contexts()
-                                          ..compress = options.compress
-                                          ..numPrecision = options.numPrecision)
-                       ];
-
-      Ruleset root = this;
-
-      // plugins must extend visitorBase
-      if (options.plugins.isNotEmpty) {
-        for (i = 0; i < options.plugins.length; i++) {
-          if (options.plugins[i].isPreEvalVisitor) {
-            preEvalVisitors.add(options.plugins[i]);
-          } else {
-            if (options.plugins[i].isPreVisitor) {
-              visitors.insert(0, options.plugins[i]);
-            } else {
-              visitors.add(options.plugins[i]);
-            }
-          }
-        }
-      }
-
-      for (i = 0; i < preEvalVisitors.length; i++) {
-        preEvalVisitors[i].run(root);
-      }
-
-      evaldRoot =  root.eval(evalEnv);
-
-      for (i = 0; i < visitors.length; i++) {
-        visitors[i].run(evaldRoot);
-      }
-
-      if (options.sourceMap) {
-        evaldRoot = new SourceMapOutput(
-                contentsIgnoredCharsMap: env.imports.contentsIgnoredChars,
-                writeSourceMap: options.writeSourceMap,
-                rootNode: evaldRoot,
-                contentsMap: env.imports.contents,
-                sourceMapFilename: options.sourceMapFilename,
-                sourceMapURL: options.sourceMapURL,
-                outputFilename: options.sourceMapOutputFilename,
-                sourceMapBasepath: options.sourceMapBasepath,
-                sourceMapRootpath: options.sourceMapRootpath,
-                outputSourceFiles: options.outputSourceFiles,
-                sourceMapGenerator: options.sourceMapGenerator
-            );
-      }
-
-      css = evaldRoot.toCSS(new Contexts()
-              ..compress = options.compress
-              ..dumpLineNumbers = options.dumpLineNumbers
-              ..strictUnits = options.strictUnits
-              ..numPrecision = 8
-              ).toString();
-
-    } catch (e, s) {
-      LessError error = LessError.transform(e, context: env);
-      throw new LessExceptionError(error);
-    }
-
-    if (options.cleancss) {
-      return css;
-
-//      var CleanCSS = require('clean-css'),
-//          cleancssOptions = options.cleancssOptions || {};
-//
-//      if (cleancssOptions.keepSpecialComments === undefined) {
-//          cleancssOptions.keepSpecialComments = "*";
-//      }
-//      cleancssOptions.processImport = false;
-//      cleancssOptions.noRebase = true;
-//      if (cleancssOptions.noAdvanced === undefined) {
-//          cleancssOptions.noAdvanced = true;
-//      }
-//
-//      return new CleanCSS(cleancssOptions).minify(css);
-    } else if (options.compress) {
-      return css;
-//      return css.replace(/(^(\s)+)|((\s)+$)/g, ""); //sourcemap problems?
-    } else {
-      return css;
-    }
-
-//  root.toCSS = (function (evaluate) { //evaluate = this
-//      return function (options, variables) {
-//          options = options || {};
-//          var evaldRoot,  <- lo que vamos a pasar a CSS
-//              css,  //<- EL RESULTADO
-//              evalEnv = new tree.evalEnv(options);
-//
-//          //
-//          // Allows setting variables with a hash, so:
-//          //
-//          //   `{ color: new(tree.Color)('#f01') }` will become:
-//          //
-//          //   new(tree.Rule)('@color',
-//          //     new(tree.Value)([
-//          //       new(tree.Expression)([
-//          //         new(tree.Color)('#f01')
-//          //       ])
-//          //     ])
-//          //   )
-//          //
-//          if (typeof(variables) === 'object' && !Array.isArray(variables)) {
-//              variables = Object.keys(variables).map(function (k) {
-//                  var value = variables[k];
-//
-//                  if (! (value instanceof tree.Value)) {
-//                      if (! (value instanceof tree.Expression)) {
-//                          value = new(tree.Expression)([value]);
-//                      }
-//                      value = new(tree.Value)([value]);
-//                  }
-//                  return new(tree.Rule)('@' + k, value, false, null, 0);
-//              });
-//              evalEnv.frames = [new(tree.Ruleset)(null, variables)];
-//          }
-//
-//          try {
-//              var preEvalVisitors = [],
-//                  visitors = [
-//                      new(tree.joinSelectorVisitor)(),
-//                      new(tree.processExtendsVisitor)(),
-//                      new(tree.toCSSVisitor)({compress: Boolean(options.compress)})
-//                  ], i, root = this;
-//
-//              if (options.plugins) {
-//                  for(i =0; i < options.plugins.length; i++) {
-//                      if (options.plugins[i].isPreEvalVisitor) {
-//                          preEvalVisitors.push(options.plugins[i]);
-//                      } else {
-//                          if (options.plugins[i].isPreVisitor) {
-//                              visitors.splice(0, 0, options.plugins[i]);
-//                          } else {
-//                              visitors.push(options.plugins[i]);
-//                          }
-//                      }
-//                  }
-//              }
-//
-//              for(i = 0; i < preEvalVisitors.length; i++) {
-//                  preEvalVisitors[i].run(root);
-//              }
-//
-//              evaldRoot = evaluate.call(root, evalEnv);
-//
-//              for(i = 0; i < visitors.length; i++) {
-//                  visitors[i].run(evaldRoot);
-//              }
-//
-//              if (options.sourceMap) {
-//                  evaldRoot = new tree.sourceMapOutput(
-//                      {
-//                          contentsIgnoredCharsMap: parser.imports.contentsIgnoredChars,
-//                          writeSourceMap: options.writeSourceMap,
-//                          rootNode: evaldRoot,
-//                          contentsMap: parser.imports.contents,
-//                          sourceMapFilename: options.sourceMapFilename,
-//                          sourceMapURL: options.sourceMapURL,
-//                          outputFilename: options.sourceMapOutputFilename,
-//                          sourceMapBasepath: options.sourceMapBasepath,
-//                          sourceMapRootpath: options.sourceMapRootpath,
-//                          outputSourceFiles: options.outputSourceFiles,
-//                          sourceMapGenerator: options.sourceMapGenerator
-//                      });
-//              }
-//
-//              css = evaldRoot.toCSS({
-//                      compress: Boolean(options.compress),
-//                      dumpLineNumbers: env.dumpLineNumbers,
-//                      strictUnits: Boolean(options.strictUnits),
-//                      numPrecision: 8});
-//          } catch (e) {
-//              throw new(LessError)(e, env);
-//          }
-//
-//          if (options.cleancss && less.mode === 'node') {
-//              var CleanCSS = require('clean-css'),
-//                  cleancssOptions = options.cleancssOptions || {};
-//
-//              if (cleancssOptions.keepSpecialComments === undefined) {
-//                  cleancssOptions.keepSpecialComments = "*";
-//              }
-//              cleancssOptions.processImport = false;
-//              cleancssOptions.noRebase = true;
-//              if (cleancssOptions.noAdvanced === undefined) {
-//                  cleancssOptions.noAdvanced = true;
-//              }
-//
-//              return new CleanCSS(cleancssOptions).minify(css);
-//          } else if (options.compress) {
-//              return css.replace(/(^(\s)+)|((\s)+$)/g, "");
-//          } else {
-//              return css;
-//          }
-//      };
-//  })(root.eval);
-  }
 }
 
 //-----------------------------------------------------------------------
 // Ruleset and MixinDefinition shared code
 //-----------------------------------------------------------------------
 
+//2.4.0+
+//FIXME: following three functions are done like inside media
 class VariableMixin {
   List<Node> rules;
 
@@ -1586,7 +1337,6 @@ class VariableMixin {
   Map<String, Node> _variables;
 
   ///
-  //2.3.1 ok
   void resetCache(){
     this._rulesets = null;
     this._variables = null;
@@ -1603,7 +1353,6 @@ class VariableMixin {
   ///
   /// Returns the variables list if exist, else creates it.
   ///
-  //2.3.1 ok
   Map<String, Node> variables(){
     if (this._variables == null) {
       this._variables = (this.rules == null) ? {} : this.rules.fold({}, (hash, r){
@@ -1654,7 +1403,6 @@ class VariableMixin {
   ///
   /// Returns the Variable Node (@variable = value).
   ///
-  //2.3.1 ok
   Node variable(String name) => this.variables()[name];
 
 //2.3.1
@@ -1665,7 +1413,6 @@ class VariableMixin {
   ///
   /// Returns a List of MixinDefinition or Ruleset contained in this.rules
   ///
-  //2.3.1 ok
   List<Node> rulesets(){
     if (this.rules == null) return null;
 
@@ -1705,7 +1452,6 @@ class VariableMixin {
   ///
   /// Function: bool filter(rule)
   ///
-  //2.3.1 ok
   List<MixinFound> find (Selector selector, [self, Function filter]) {
     if (self == null) self = this;
     List<MixinFound> rules = [];
@@ -1722,7 +1468,7 @@ class VariableMixin {
           if (match > 0) {
             if (selector.elements.length > match) {
               if (filter == null || filter(rule)) {
-                foundMixins = (rule as Ruleset).find(new Selector(selector.elements.sublist(match)), self, filter);
+                foundMixins = (rule as VariableMixin).find(new Selector(selector.elements.sublist(match)), self, filter);
                 for (int i = 0; i < foundMixins.length; i++) {
                   foundMixins[i].path.add(rule); //2.3.1 MixinDefinition, Ruleset
                 }

@@ -1,4 +1,4 @@
-//source: less/tree/color.js 2.3.1
+//source: less/tree/color.js 2.4.0
 
 part of tree.less;
 
@@ -28,8 +28,10 @@ class Color extends Node implements CompareNode, OperateNode {
   /// or String length=6 # 'deb887' or length=3 # 'f01'.
   /// [alpha] 0 < alpha < 1. Default = 1.
   ///
-  //2.2.0 ok
   Color(rgb, [num this.alpha = 1]){
+    if (alpha == 0) alpha = 0; // convert to int
+    if (alpha == 1) alpha = 1;
+
     RegExp hex6 = new RegExp('.{2}');
 
     if (rgb is List<int>) {           // [0, 0 , 0]
@@ -64,7 +66,6 @@ class Color extends Node implements CompareNode, OperateNode {
   }
 
   ///
-  //2.3.1 ok
   factory Color.fromKeyword(String keyword){
     Color c;
     String key = keyword.toLowerCase();
@@ -106,7 +107,6 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Calculates the luma (perceptual brightness) of a color object
   ///
-  //2.2.0 ok
   double luma() {
     double r = this.r / 255;
     double g = this.g / 255;
@@ -133,7 +133,6 @@ class Color extends Node implements CompareNode, OperateNode {
   }
 
   ///
-  //2.2.0 ok
   void genCSS(Contexts context, Output output) {
     output.add(this.toCSS(context));
   }
@@ -141,7 +140,6 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Returns this color as string. Transparent, #rrggbb, #rgb.
   ///
-  //2.3.1 ok
   String toCSS(context) {
     // `value` is set if this color was originally
     // converted from a named color string so we need
@@ -223,7 +221,6 @@ class Color extends Node implements CompareNode, OperateNode {
   /// our result, in the form of an integer triplet,
   /// we create a new Color node to hold the result.
   ///
-  //2.3.1
   Color operate(Contexts context, String op, Color other) {
     List<num> rgb = [0, 0, 0];
     num alpha = this.alpha * (1 - other.alpha) + other.alpha;
@@ -246,13 +243,11 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Returns this color as String #rrggbb.
   ///
-  //2.2.0 ok
   String toRGB() => toHex(this.rgb);
 
   ///
   /// Returns this Color as HSLA
   ///
-  //2.2.0 ok
   HSLType toHSL() {
     double r = this.r / 255;
     double g = this.g / 255;
@@ -315,7 +310,6 @@ class Color extends Node implements CompareNode, OperateNode {
   }
 
   ///
-  //2.2.0 ok
   /*
    * Adapted from
    * http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
@@ -324,7 +318,7 @@ class Color extends Node implements CompareNode, OperateNode {
     double r = this.r / 255;
     double g = this.g / 255;
     double b = this.b / 255;
-    double a = this.alpha;
+    double a = this.alpha.toDouble();
 
     List maxList = [['r', r], ['g', g], ['b', b]]..sort((x, y) => y[1] - x[1]); // big to little
     double max = maxList.first[1];
@@ -393,7 +387,6 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Returns a String such as #aarrggbb
   ///
-  //2.2.0 ok
   String toARGB() => toHex([this.alpha * 255]..addAll(this.rgb));
 
 
@@ -402,7 +395,6 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Returns -1, 0 for different, equal
   ///
-  //2.2.0 ok
   int compare(Node x) {
     if (x is! Color) return -1;
 
@@ -410,7 +402,7 @@ class Color extends Node implements CompareNode, OperateNode {
     return (xx.r == this.r &&
             xx.g == this.g &&
             xx.b == this.b &&
-            xx.alpha == this.alpha) ? 0 : -1;
+            xx.alpha == this.alpha) ? 0 : null;
 
 //2.2.0
 //  Color.prototype.compare = function (x) {
@@ -426,7 +418,6 @@ class Color extends Node implements CompareNode, OperateNode {
   /// Returns a String #rrggbb.
   /// [v] is a List<num> = [r, g, b] or [r, b, b, a].
   ///
-  //2.2.0 ok
   // static?
   String toHex(List<num> v) {
     List<String> resultList = v.map((num c){
@@ -447,7 +438,6 @@ class Color extends Node implements CompareNode, OperateNode {
   ///
   /// Returns num v in the range [0 v max].
   ///
-  //2.2.0 ok
   // static?
   num clamp(num v, num max) => v.clamp(0, max);
 

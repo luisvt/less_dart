@@ -1,34 +1,35 @@
-//source: less/tree/media.js 2.3.1
+//source: less/tree/media.js 2.4.0+1
 
 part of tree.less;
 
-//TODO 2.3.1 extends from Directive
-class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkReferencedNode {
+//2.3.1 extends from Directive
+//class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkReferencedNode {
+class Media extends DirectiveBase {
   Node features;
   int index;
   FileInfo currentFileInfo;
 
   bool isReferenced = false;
   bool isRulesetLike(bool root) => true;
-  List<Node> rules;
+  List<Ruleset> rules;
 
   final String type = 'Media';
 
   ///
-  //2.3.1 ok
-  Media(value, List features, [int this.index, FileInfo this.currentFileInfo]) {
-    List<Node> selectors = emptySelectors();
+  Media(value, List features, [int this.index, FileInfo this.currentFileInfo]):super() {
+    //List<Node> selectors = emptySelectors();
+    List<Node> selectors = (new Selector([], null, null, this.index, this.currentFileInfo)).createEmptySelectors();
 
     this.features = new Value(features);
     this.rules = [new Ruleset(selectors, value)
                   ..allowImports = true];
 
-//2.3.1
+//2.4.0+1
 //  var Media = function (value, features, index, currentFileInfo) {
 //      this.index = index;
 //      this.currentFileInfo = currentFileInfo;
 //
-//      var selectors = this.emptySelectors();
+//      var selectors = (new Selector([], null, null, this.index, this.currentFileInfo)).createEmptySelectors();
 //
 //      this.features = new Value(features);
 //      this.rules = [new Ruleset(selectors, value)];
@@ -37,7 +38,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   }
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor) {
     if (this.features != null) this.features = visitor.visit(this.features);
     if (this.rules != null) this.rules = visitor.visitArray(this.rules);
@@ -54,7 +54,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   }
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
     output.add('@media ', this.currentFileInfo, this.index);
     this.features.genCSS(context, output);
@@ -69,7 +68,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   }
 
   ///
-  //2.3.1 ok
   eval(Contexts context) {
     if (context.mediaBlocks == null) {
       context.mediaBlocks = [];
@@ -103,7 +101,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
     context.mediaPath.removeLast();
 
     return context.mediaPath.isEmpty ? media.evalTop(context) : media.evalNested(context);
-
 
 //2.3.1
 //  Media.prototype.eval = function (context) {
@@ -145,71 +142,16 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
 //  };
   }
 
-//VariableMixin
-//  variable(name) {
-////    variable: function (name) { return tree.Ruleset.prototype.variable.call(this.rules[0], name); },
-//  }
-//
-//  find() {
-////    find: function () { return tree.Ruleset.prototype.find.apply(this.rules[0], arguments); },
-//  }
-//
-//  rulesets() {
-////    rulesets: function () { return tree.Ruleset.prototype.rulesets.apply(this.rules[0]); },
-//  }
-
-  ///
-  //2.3.1 ok
-  List<Selector> emptySelectors() {
-    Element el = new Element('', '&', index, currentFileInfo);
-    List<Selector> sels = [new Selector([el],null, null, index, currentFileInfo)
-                              ..mediaEmpty = true];
-    return sels;
-
-//2.3.1
-//  Media.prototype.emptySelectors = function() {
-//      var el = new Element('', '&', this.index, this.currentFileInfo),
-//          sels = [new Selector([el], null, null, this.index, this.currentFileInfo)];
-//      sels[0].mediaEmpty = true;
-//      return sels;
-//  };
-  }
-
-  //--- MarkReferencedNode
-
-  ///
-  //2.3.1 ok
-  void markReferenced() {
-    List<Node> rules = this.rules[0].rules;
-    (this.rules[0] as MarkReferencedNode).markReferenced();
-    this.isReferenced = true;
-    for (int i = 0; i < rules.length; i++) {
-      if (rules[i] is MarkReferencedNode) (rules[i] as MarkReferencedNode).markReferenced();
-    }
-
-//2.3.1
-//  Media.prototype.markReferenced = function () {
-//      var i, rules = this.rules[0].rules;
-//      this.rules[0].markReferenced();
-//      this.isReferenced = true;
-//      for (i = 0; i < rules.length; i++) {
-//          if (rules[i].markReferenced) {
-//              rules[i].markReferenced();
-//          }
-//      }
-//  };
-  }
-
   ///
   /// Returns Media or Ruleset
   ///
-  //2.3.1 ok
   Node evalTop(Contexts context) {
     Node result = this;
 
     // Render all dependent Media blocks.
     if (context.mediaBlocks.length > 1) {
-      List<Selector> selectors = this.emptySelectors();
+      //List<Selector> selectors = this.emptySelectors();
+      List<Selector> selectors = (new Selector([], null, null, this.index, this.currentFileInfo)).createEmptySelectors();
       result = new Ruleset(selectors, context.mediaBlocks)
                     ..multiMedia = true;
     }
@@ -219,13 +161,13 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
 
     return result;
 
-//2.3.1
+//2.4.0+1
 //  Media.prototype.evalTop = function (context) {
 //      var result = this;
 //
 //      // Render all dependent Media blocks.
 //      if (context.mediaBlocks.length > 1) {
-//          var selectors = this.emptySelectors();
+//          var selectors = (new Selector([], null, null, this.index, this.currentFileInfo)).createEmptySelectors();
 //          result = new Ruleset(selectors, context.mediaBlocks);
 //          result.multiMedia = true;
 //      }
@@ -238,7 +180,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   }
 
   ///
-  //2.3.1 ok
   Node evalNested(Contexts context) {
     var value; //Node or List
     List<Media> mediaPath = context.mediaPath.sublist(0)..add(this);
@@ -315,7 +256,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   /// Converts [[Node1], [Node2], [Node3]] to [[Node1, Node2, Node3]]
   /// permute List 3x1 to List 1x3
   ///
-  //2.3.1 ok
   List<List> permute(List<List> arr) {
     if (arr.isEmpty) {
       return [];
@@ -353,7 +293,6 @@ class Media extends Node with OutputRulesetMixin, VariableMixin implements MarkR
   }
 
   ///
-  //2.3.1 ok
   void bubbleSelectors(List<Selector> selectors) {
     if (selectors == null) return;
     this.rules = [new Ruleset(selectors.sublist(0), [this.rules[0]])];

@@ -1,4 +1,4 @@
-//source: less/parser.js 2.2.0 lines 578-810
+//source: less/parser.js 2.4.0+7 lines 578-810
 
 part of parser.less;
 
@@ -29,7 +29,6 @@ class Mixin {
   /// namespaced, but we only support the child and descendant
   /// selector for now.
   ///
-  //2.2.0 ok
   MixinCall call() {
     List<MixinArgs> args;
     String c;
@@ -50,7 +49,11 @@ class Mixin {
       e = parserInput.$re(r'^[#.](?:[\w-]|\\(?:[A-Fa-f0-9]{1,6} ?|[^A-Fa-f0-9]))+');
       if (e == null) break;
       elem = new Element(c, e, elemIndex, fileInfo);
-      if (elements != null) { elements.add(elem); } else { elements = [elem]; }
+      if (elements != null) {
+        elements.add(elem);
+      } else {
+        elements = [elem];
+      }
       c = parserInput.$char('>');
     }
 
@@ -69,7 +72,7 @@ class Mixin {
     parserInput.restore();
     return null;
 
-//2.2.0
+//2.4.0
 //  call: function () {
 //      var s = parserInput.currentChar(), important = false, index = parserInput.i, elemIndex,
 //          elements, elem, e, c, args;
@@ -85,7 +88,11 @@ class Mixin {
 //              break;
 //          }
 //          elem = new(tree.Element)(c, e, elemIndex, fileInfo);
-//          if (elements) { elements.push(elem); } else { elements = [ elem ]; }
+//          if (elements) {
+//              elements.push(elem);
+//          } else {
+//              elements = [ elem ];
+//          }
 //          c = parserInput.$char('>');
 //      }
 //
@@ -106,11 +113,10 @@ class Mixin {
 //      }
 //
 //      parserInput.restore();
-//  }
+//  },
   }
 
   ///
-  //2.2.0 ok
   MixinReturner args(bool isCall) {
     Node arg;
     List argsComma = [];
@@ -163,11 +169,7 @@ class Mixin {
             expressionContainsNamed = true;
           }
 
-          // we do not support setting a ruleset as a default variable - it doesn't make sense
-          // However if we do want to add it, there is nothing blocking it, just don't error
-          // and remove isCall dependency below
-          value = null;
-          if (isCall) value = parsers.detachedRuleset();
+          value = parsers.detachedRuleset();
           if (value == null) value = parsers.expression();
 
           if (value == null) {
@@ -216,8 +218,8 @@ class Mixin {
     returner.args = isSemiColonSeperated ? argsSemiColon : argsComma;
     return returner;
 
-//2.2.0
-//  args: function (isCall) {
+//2.4.0+7
+//    args: function (isCall) {
 //      var entities = parsers.entities,
 //          returner = { args:null, variadic: false },
 //          expressions = [], argsSemiColon = [], argsComma = [],
@@ -271,10 +273,7 @@ class Mixin {
 //                      expressionContainsNamed = true;
 //                  }
 //
-//                  // we do not support setting a ruleset as a default variable - it doesn't make sense
-//                  // However if we do want to add it, there is nothing blocking it, just don't error
-//                  // and remove isCall dependency below
-//                  value = (isCall && parsers.detachedRuleset()) || parsers.expression();
+//                  value = parsers.detachedRuleset() || parsers.expression();
 //
 //                  if (!value) {
 //                      if (isCall) {
@@ -332,7 +331,7 @@ class Mixin {
 //      parserInput.forget();
 //      returner.args = isSemiColonSeparated ? argsSemiColon : argsComma;
 //      return returner;
-//  }
+//  },
   }
 
   ///
@@ -354,7 +353,6 @@ class Mixin {
   /// Once we've got our params list, and a closing `)`, we parse
   /// the `{...}` block.
   ///
-  //2.2.0 ok
   MixinDefinition definition() {
     Condition cond;
     int index = parserInput.i; //not in original

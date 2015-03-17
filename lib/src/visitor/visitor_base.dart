@@ -2,12 +2,15 @@ library visitor.less;
 
 import 'dart:async';
 import '../contexts.dart';
+import '../import_manager.dart';
 import '../less_error.dart';
-import '../nodejs/nodejs.dart';
+import '../logger.dart';
+import '../environment/environment.dart';
 import '../tree/tree.dart';
 
 part 'extend_finder_visitor.dart';
 part 'join_selector_visitor.dart';
+part 'import_detector.dart';
 part 'import_visitor.dart';
 part 'process_extends_visitor.dart';
 part 'to_css_visitor.dart';

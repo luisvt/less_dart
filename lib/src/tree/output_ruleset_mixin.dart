@@ -1,11 +1,10 @@
-//source: tree/directive.js 2.3.1 lines 92-122
+//source: tree/directive.js 2.4.0 lines 92-122
 
 part of tree.less;
 
 // Used in Directive & Media -
 class OutputRulesetMixin {
   ///
-  //2.3.1 ok
   void outputRuleset(Contexts context, Output output, List<Node> rules) {
     int ruleCnt = rules.length;
 

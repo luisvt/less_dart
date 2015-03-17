@@ -1,8 +1,8 @@
-//source: less/tree/keyword.js 2.3.1
+//source: less/tree/keyword.js 2.4.0
 
 part of tree.less;
 
-class Keyword extends Node implements CompareNode {
+class Keyword extends Node {
   String value;
 
   final String type = 'Keyword';
@@ -18,7 +18,6 @@ class Keyword extends Node implements CompareNode {
   }
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
     if (this.value == '%') {
       throw new LessExceptionError(new LessError(
@@ -32,20 +31,5 @@ class Keyword extends Node implements CompareNode {
 //      if (this.value === '%') { throw { type: "Syntax", message: "Invalid % without number" }; }
 //      output.add(this.value);
 //  };
-  }
-
-//    toCSS: tree.toCSS,
-
-
-//--- CompareNode
-
-  /// Returns -1, 0 or +1
-  //2.3.1 - don't remove used by Node.compareNodes
-  int compare(Node other) {
-    if (other is Keyword) {
-      return (other.value == this.value) ? 0 : 1;
-    } else {
-      return -1;
-    }
   }
 }

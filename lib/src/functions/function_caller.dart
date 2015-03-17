@@ -1,4 +1,4 @@
-// source: lib/less/functions/function-caller.js 2.2.0
+// source: lib/less/functions/function-caller.js 2.4.0+2
 
 part of functions.less;
 
@@ -15,6 +15,7 @@ class FunctionCaller {
 
   /// Inner instance classes
   List<FunctionBase> innerCache;
+  List<FunctionBase> customCache;
   FunctionBase defaultCache;
 
   /// instance that has the method to call
@@ -25,14 +26,23 @@ class FunctionCaller {
       new ColorBlend(),
       new ColorFunctions(),
       new DataUriFunctions(),
+      new ImageSizeFunctions(),
       new MathFunctions(),
       new NumberFunctions(),
       new StringFunctions(),
       new SvgFunctions(),
       new TypesFunctions()
       ];
-    if (context.customFunctions != null) innerCache.add(context.customFunctions);
     defaultCache = new DefaultFunc();
+
+//2.4.0
+//var functionCaller = function(name, context, index, currentFileInfo) {
+//    this.name = name.toLowerCase();
+//    this.func = functionRegistry.get(this.name);
+//    this.index = index;
+//    this.context = context;
+//    this.currentFileInfo = currentFileInfo;
+//};
   }
 
   factory FunctionCaller(String name, Contexts context, int index, FileInfo currentFileInfo) {
@@ -43,6 +53,11 @@ class FunctionCaller {
       ..index = index
       ..currentFileInfo = currentFileInfo
       ..found = null;
+    if (context.pluginManager != null) {
+      cache.customCache = context.pluginManager.getCustomFunction();
+    } else {
+      cache.customCache = [];
+    }
     return cache;
   }
 
@@ -50,6 +65,7 @@ class FunctionCaller {
   bool isValid() {
     List<FunctionBase> inner = innerCache.sublist(0);
     inner.add(context.defaultFunc != null ? context.defaultFunc : defaultCache);
+    inner.addAll(customCache);
     found = null;
 
     for (int i = 0; i < inner.length; i++) {
@@ -60,26 +76,68 @@ class FunctionCaller {
     }
 
     return false;
-  }
 
-  call(List args) {
-    found.init(context, index, currentFileInfo);
-    return found.call(args);
-  }
-
-
-//var functionCaller = function(name, context, index, currentFileInfo) {
-//    this.name = name.toLowerCase();
-//    this.func = functionRegistry.get(this.name);
-//    this.index = index;
-//    this.context = context;
-//    this.currentFileInfo = currentFileInfo;
-//};
+//2.4.0
 //functionCaller.prototype.isValid = function() {
 //    return Boolean(this.func);
 //};
-//functionCaller.prototype.call = function(args) {
-//    return this.func.apply(this, args);
-//};
+  }
 
+  ///
+  call(List args) {
+    // This code is terrible and should be replaced as per this issue...
+    // https://github.com/less/less.js/issues/2477
+    if (args != null) {
+      args.retainWhere((item) => item is! Comment);
+      args = args.map((item){
+        if (item is Expression) {
+          List<Node> subNodes = item.value;
+          subNodes.retainWhere((item) => item is! Comment);
+          if (subNodes.length == 1) {
+            return subNodes[0];
+          } else {
+            return new Expression(subNodes);
+          }
+        }
+        return item;
+      }).toList();
+    }
+
+    found.init(context, index, currentFileInfo);
+    return found.call(args);
+
+
+//2.4.0+2
+//  functionCaller.prototype.call = function(args) {
+//
+//      // This code is terrible and should be replaced as per this issue...
+//      // https://github.com/less/less.js/issues/2477
+//      if (Array.isArray(args)) {
+//          args = args.filter(function (item) {
+//              if (item.type === "Comment") {
+//                  return false;
+//              }
+//              return true;
+//          })
+//          .map(function(item) {
+//              if (item.type === "Expression") {
+//                  var subNodes = item.value.filter(function (item) {
+//                      if (item.type === "Comment") {
+//                          return false;
+//                      }
+//                      return true;
+//                  });
+//                  if (subNodes.length === 1) {
+//                      return subNodes[0];
+//                  } else {
+//                      return new Expression(subNodes);
+//                  }
+//              }
+//              return item;
+//          });
+//      }
+//
+//      return this.func.apply(this, args);
+//  };
+  }
 }

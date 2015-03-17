@@ -1,4 +1,4 @@
-//source: less/tree/condition.js 2.3.1
+//source: less/tree/condition.js 2.4.0
 
 part of tree.less;
 
@@ -30,7 +30,6 @@ class Condition extends Node {
   ///
   /// Compare (lvalue op rvalue) returning true or false
   ///
-  //2.3.1 ok
   bool eval(Contexts context) {
     bool comparation(String op, a, b) {
       switch (op) {

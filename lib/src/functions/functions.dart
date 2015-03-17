@@ -1,14 +1,13 @@
 library functions.less;
 
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:mirrors';
+import 'dart:mirrors' hide Comment;
 
 import '../contexts.dart';
 import '../file_info.dart';
 import '../less_error.dart';
+import '../logger.dart';
 import '../environment/environment.dart';
-import '../nodejs/nodejs.dart';
 import '../tree/tree.dart';
 
 part 'color_blend.dart';
@@ -17,6 +16,7 @@ part 'data_uri_functions.dart';
 part 'default_func.dart';
 part 'function_caller.dart';
 part 'function_base.dart';
+part 'image_size_functions.dart';
 part 'math_functions.dart';
 part 'number_functions.dart';
 part 'string_functions.dart';

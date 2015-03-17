@@ -1,4 +1,4 @@
-//source: less/visitor.js 1.7.5
+//source: less/visitor.js 2.4.0
 
 part of visitor.less;
 
@@ -6,6 +6,7 @@ class Visitor extends VisitorBase{
   VisitorBase _implementation; //Join_Selector_visitor, ...
   VisitArgs _visitArgs = new VisitArgs(true);
 
+  ///
   Visitor(VisitorBase this._implementation);
 
   /// Process a [node] and the subtree
@@ -29,53 +30,53 @@ class Visitor extends VisitorBase{
 
     return node;
 
-
-//        visit: function(node) {
-//            if (!node) {
-//                return node;
-//            }
+//2.3.1
+//  visit: function(node) {
+//      if (!node) {
+//          return node;
+//      }
 //
-//            var nodeTypeIndex = node.typeIndex;
-//            if (!nodeTypeIndex) {
-//                return node;
-//            }
+//      var nodeTypeIndex = node.typeIndex;
+//      if (!nodeTypeIndex) {
+//          return node;
+//      }
 //
-//            var visitFnCache = this._visitFnCache,
-//                impl = this._implementation,
-//                aryIndx = nodeTypeIndex << 1,
-//                outAryIndex = aryIndx | 1,
-//                func = visitFnCache[aryIndx],
-//                funcOut = visitFnCache[outAryIndex],
-//                visitArgs = _visitArgs,
-//                fnName;
+//      var visitFnCache = this._visitFnCache,
+//          impl = this._implementation,
+//          aryIndx = nodeTypeIndex << 1,
+//          outAryIndex = aryIndx | 1,
+//          func = visitFnCache[aryIndx],
+//          funcOut = visitFnCache[outAryIndex],
+//          visitArgs = _visitArgs,
+//          fnName;
 //
-//            visitArgs.visitDeeper = true;
+//      visitArgs.visitDeeper = true;
 //
-//            if (!func) {
-//                fnName = "visit" + node.type;
-//                func = impl[fnName] || _noop;
-//                funcOut = impl[fnName + "Out"] || _noop;
-//                visitFnCache[aryIndx] = func;
-//                visitFnCache[outAryIndex] = funcOut;
-//            }
+//      if (!func) {
+//          fnName = "visit" + node.type;
+//          func = impl[fnName] || _noop;
+//          funcOut = impl[fnName + "Out"] || _noop;
+//          visitFnCache[aryIndx] = func;
+//          visitFnCache[outAryIndex] = funcOut;
+//      }
 //
-//            if (func !== _noop) {
-//                var newNode = func.call(impl, node, visitArgs);
-//                if (impl.isReplacing) {
-//                    node = newNode;
-//                }
-//            }
+//      if (func !== _noop) {
+//          var newNode = func.call(impl, node, visitArgs);
+//          if (impl.isReplacing) {
+//              node = newNode;
+//          }
+//      }
 //
-//            if (visitArgs.visitDeeper && node && node.accept) {
-//                node.accept(this);
-//            }
+//      if (visitArgs.visitDeeper && node && node.accept) {
+//          node.accept(this);
+//      }
 //
-//            if (funcOut != _noop) {
-//                funcOut.call(impl, node);
-//            }
+//      if (funcOut != _noop) {
+//          funcOut.call(impl, node);
+//      }
 //
-//            return node;
-//        },
+//      return node;
+//  },
   }
 
   ///
@@ -92,6 +93,7 @@ class Visitor extends VisitorBase{
     List out = [];
     for (int i = 0; i < nodes.length; i++) {
       var evald = this.visit(nodes[i]);
+      if (evald == null) continue;
 
       if (evald is! List) {
         out.add(evald);
@@ -101,33 +103,35 @@ class Visitor extends VisitorBase{
     }
     return out;
 
-//        visitArray: function(nodes, nonReplacing) {
-//            if (!nodes) {
-//                return nodes;
-//            }
+//2.3.1
+//  visitArray: function(nodes, nonReplacing) {
+//      if (!nodes) {
+//          return nodes;
+//      }
 //
-//            var cnt = nodes.length, i;
+//      var cnt = nodes.length, i;
 //
-//            // Non-replacing
-//            if (nonReplacing || !this._implementation.isReplacing) {
-//                for (i = 0; i < cnt; i++) {
-//                    this.visit(nodes[i]);
-//                }
-//                return nodes;
-//            }
+//      // Non-replacing
+//      if (nonReplacing || !this._implementation.isReplacing) {
+//          for (i = 0; i < cnt; i++) {
+//              this.visit(nodes[i]);
+//          }
+//          return nodes;
+//      }
 //
-//            // Replacing
-//            var out = [];
-//            for (i = 0; i < cnt; i++) {
-//                var evald = this.visit(nodes[i]);
-//                if (!evald.splice) {
-//                    out.push(evald);
-//                } else if (evald.length) {
-//                    this.flatten(evald, out);
-//                }
-//            }
-//            return out;
-//        },
+//      // Replacing
+//      var out = [];
+//      for (i = 0; i < cnt; i++) {
+//          var evald = this.visit(nodes[i]);
+//          if (evald === undefined) { continue; }
+//          if (!evald.splice) {
+//              out.push(evald);
+//          } else if (evald.length) {
+//              this.flatten(evald, out);
+//          }
+//      }
+//      return out;
+//  },
   }
 
   ///
@@ -143,6 +147,7 @@ class Visitor extends VisitorBase{
 
     for (int i = 0 ; i < arr.length; i++) {
       item = arr[i];
+      if (item == null) continue;
       if (item is Node) {
         out.add(item);
         continue;
@@ -151,6 +156,7 @@ class Visitor extends VisitorBase{
       nestedCnt = (item as List).length;
       for (int j = 0; j < nestedCnt; j++) {
         nestedItem = (item as List)[j];
+        if (nestedItem == null) continue;
         if (nestedItem is Node) {
           out.add(nestedItem);
         } else if (nestedItem is List) {
@@ -161,32 +167,39 @@ class Visitor extends VisitorBase{
 
     return out;
 
-//        flatten: function(arr, out) {
-//            if (!out) {
-//                out = [];
-//            }
+//2.3.1
+//  flatten: function(arr, out) {
+//      if (!out) {
+//          out = [];
+//      }
 //
-//            var cnt, i, item,
-//                nestedCnt, j, nestedItem;
+//      var cnt, i, item,
+//          nestedCnt, j, nestedItem;
 //
-//            for (i = 0, cnt = arr.length; i < cnt; i++) {
-//                item = arr[i];
-//                if (!item.splice) {
-//                    out.push(item);
-//                    continue;
-//                }
+//      for (i = 0, cnt = arr.length; i < cnt; i++) {
+//          item = arr[i];
+//          if (item === undefined) {
+//              continue;
+//          }
+//          if (!item.splice) {
+//              out.push(item);
+//              continue;
+//          }
 //
-//                for (j = 0, nestedCnt = item.length; j < nestedCnt; j++) {
-//                    nestedItem = item[j];
-//                    if (!nestedItem.splice) {
-//                        out.push(nestedItem);
-//                    } else if (nestedItem.length) {
-//                        this.flatten(nestedItem, out);
-//                    }
-//                }
-//            }
+//          for (j = 0, nestedCnt = item.length; j < nestedCnt; j++) {
+//              nestedItem = item[j];
+//              if (nestedItem === undefined) {
+//                  continue;
+//              }
+//              if (!nestedItem.splice) {
+//                  out.push(nestedItem);
+//              } else if (nestedItem.length) {
+//                  this.flatten(nestedItem, out);
+//              }
+//          }
+//      }
 //
-//            return out;
-//        }
+//      return out;
+//  }
   }
 }

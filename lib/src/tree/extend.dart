@@ -1,4 +1,4 @@
-//source: less/tree/extend.js 2.3.1
+//source: less/tree/extend.js 2.4.0
 
 part of tree.less;
 
@@ -10,6 +10,7 @@ class Extend extends Node {
   bool            allowAfter;
   bool            allowBefore;
   bool            firstExtendOnThisSelectorPath = false;
+  bool            hasFoundMatches = false; // ProcessExtendsVisitor
   int             object_id;
   List<int>       parent_ids;
   Ruleset         ruleset; //extend
@@ -20,7 +21,6 @@ class Extend extends Node {
   final String type = 'Extend';
 
   ///
-  //2.3.1 ok
   Extend(Node this.selector, String this.option, int this.index) {
     this.object_id = next_id++;
     this.parent_ids = [this.object_id];
@@ -58,7 +58,6 @@ class Extend extends Node {
   }
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor) {
     this.selector = visitor.visit(this.selector);
 
@@ -69,7 +68,6 @@ class Extend extends Node {
   }
 
   ///
-  //2.3.1 ok
   Extend eval(Contexts context) => new Extend(this.selector.eval(context), this.option, this.index);
 
 //2.3.1
@@ -78,7 +76,7 @@ class Extend extends Node {
 //  };
 
   ///
-  //2.3.1 ok - // removed clone(context)
+  //removed clone(context)
   Node clone() => new Extend (this.selector, this.option, this.index);
 
 //2.3.1
@@ -87,7 +85,6 @@ class Extend extends Node {
 //  };
 
   ///
-  //2.3.1 ok
   void findSelfSelectors(List<Selector> selectors) {
     List selfElements = [];
     List<Element> selectorElements;

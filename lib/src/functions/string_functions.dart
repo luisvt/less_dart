@@ -1,4 +1,4 @@
-// source: lib/less/functions/string.js 2.2.0
+// source: lib/less/functions/string.js 2.4.0
 
 part of functions.less;
 
@@ -74,12 +74,13 @@ class StringFunctions extends FunctionBase {
   Quoted replace(Node string, Quoted pattern, Quoted replacement, [Quoted flags]) {
     //string is Quoted, Keyword
     String flagsValue = flags != null ? flags.value : '';
-    RegExpExtended re = new RegExpExtended(pattern.value, flagsValue);
+    MoreRegExp re = new MoreRegExp(pattern.value, flagsValue);
     String result = re.replace(string.value, replacement.value);
     String quote = (string is Quoted) ? string.quote : '';
     bool escaped = (string is Quoted) ? string.escaped : false;
     return new Quoted(quote, result, escaped);
 
+//2.2.0
 //    replace: function (string, pattern, replacement, flags) {
 //        var result = string.value;
 //
@@ -116,9 +117,9 @@ class StringFunctions extends FunctionBase {
   ///
   @defineMethod(name: '%', listArguments: true)
   Quoted format(List<Node> args) {
-    Quoted qstr = args[0];
+    Node qstr = args[0];
     String result = qstr.value;
-    RegExpExtended sda = new RegExpExtended(r'%[sda]','i');
+    MoreRegExp sda = new MoreRegExp(r'%[sda]','i');
     RegExp az = new RegExp(r'[A-Z]$', caseSensitive: true);
 
     for (int i = 1; i < args.length; i++) {
@@ -128,21 +129,27 @@ class StringFunctions extends FunctionBase {
       });
     }
     result.replaceAll(new RegExp(r'%%'), '%');
-    return new Quoted(getValueOrDefault(qstr.quote, ''), result, qstr.escaped, qstr.index, currentFileInfo);
+    if (qstr is Quoted) {
+      //return new Quoted(getValueOrDefault(qstr.quote, ''), result, qstr.escaped, qstr.index, currentFileInfo);
+      return new Quoted(getValueOrDefault(qstr.quote, ''), result, qstr.escaped, qstr.index, currentFileInfo);
+    } else {
+      return new Quoted('', result, null);
+    }
 
-//    '%': function (string /* arg, arg, ...*/) {
-//        var args = Array.prototype.slice.call(arguments, 1),
-//            result = string.value;
+//2.4.0
+//  '%': function (string /* arg, arg, ...*/) {
+//      var args = Array.prototype.slice.call(arguments, 1),
+//          result = string.value;
 //
-//        for (var i = 0; i < args.length; i++) {
-//            /*jshint loopfunc:true */
-//            result = result.replace(/%[sda]/i, function(token) {
-//                var value = token.match(/s/i) ? args[i].value : args[i].toCSS();
-//                return token.match(/[A-Z]$/) ? encodeURIComponent(value) : value;
-//            });
-//        }
-//        result = result.replace(/%%/g, '%');
-//        return new Quoted(string.quote || '', result, string.escaped);
-//    }
+//      for (var i = 0; i < args.length; i++) {
+//          /*jshint loopfunc:true */
+//          result = result.replace(/%[sda]/i, function(token) {
+//              var value = token.match(/s/i) ? args[i].value : args[i].toCSS();
+//              return token.match(/[A-Z]$/) ? encodeURIComponent(value) : value;
+//          });
+//      }
+//      result = result.replace(/%%/g, '%');
+//      return new Quoted(string.quote || '', result, string.escaped);
+//  }
   }
 }

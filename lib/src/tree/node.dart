@@ -1,4 +1,4 @@
-//source: less/tree/node.js 2.3.1
+//source: less/tree/node.js 2.4.0
 
 part of tree.less;
 
@@ -12,6 +12,7 @@ class Node {
   /// hashCode own or inherited for object compare
   int id;
 
+  FileInfo currentFileInfo;
   bool isRuleset = false; //true in MixinDefinition & Ruleset
   var name;
   var operands;
@@ -40,7 +41,6 @@ class Node {
   ///
   /// Returns node transformed to css code
   ///
-  //2.3.1 ok
   String toCSS(Contexts context) {
      Output output = new Output();
      this.genCSS(context, output);
@@ -65,7 +65,6 @@ class Node {
   ///
   /// Writes in [output] the node transformed to CSS.
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output){
     output.add(this.value);
 
@@ -76,7 +75,6 @@ class Node {
   }
 
   ///
-  //2.3.1 ok
   accept(VisitorBase visitor) {
     this.value = visitor.visit(this.value);
 
@@ -89,14 +87,12 @@ class Node {
   ///
   /// Default eval - returns the node
   ///
-  //2.3.1 ok
   eval(Contexts context) => this;
 
 //2.3.1
 //  Node.prototype.eval = function () { return this; };
 
   ///
-  //2.3.1 ok
   num _operate(Contexts context, String op, num a, num b) {
     switch (op) {
         case '+': return a + b;
@@ -117,12 +113,10 @@ class Node {
 //  };
   }
 
-
   ///
   /// Adjust the precision of [value] according to [context].numPrecision.
   /// 8 By default.
   ///
-  //2.3.1 ok
   num fround(Contexts context, num value) {
   if (value is int) return value;
 
@@ -151,14 +145,15 @@ class Node {
   ///   1: a > b
   ///   and null  for other value for a != b
   ///
-  // 2.3.1 ok
   static int compareNodes(Node a, Node b) {
+    //new Logger().log('${a.type}: ${a.value} - ${b.type}: ${b.value}');
+
     // for "symmetric results" force toCSS-based comparison
     // of Quoted or Anonymous if either value is one of those
     if ((a is CompareNode) && !(b is Quoted || b is Anonymous)) {
       return (a as CompareNode).compare(b);
     } else if (b is CompareNode) {
-      return -(b as CompareNode).compare(a);
+      return negate((b as CompareNode).compare(a)); //-null?
     } else if (a.runtimeType != b.runtimeType) {
       return null;
     }
@@ -212,7 +207,6 @@ class Node {
   }
 
   ///
-  //2.2.0 ok
   static int numericCompare(num a, num b) {
     return a.compareTo(b);
 

@@ -1,44 +1,82 @@
-//source: less/to-css-visitor.js 1.7.5
+//source: less/to-css-visitor.js 2.4.0+6
 
 part of visitor.less;
 
 class ToCSSVisitor extends VisitorBase{
-  Contexts _env;
+  Contexts _context;
 
   bool charset = false;
   bool isReplacing = true;
   Visitor _visitor;
 
-  ToCSSVisitor(Contexts env) {
+  ///
+  ToCSSVisitor(Contexts context) {
     this._visitor = new Visitor(this);
-    this._env = env;
+    this._context = context;
+
+//2.3.1
+//  var ToCSSVisitor = function(context) {
+//      this._visitor = new Visitor(this);
+//      this._context = context;
+//  };
   }
 
   ///
   Node run (Ruleset root) => this._visitor.visit(root);
 
+//2.3.1
+//  run: function (root) {
+//      return this._visitor.visit(root);
+//  },
+
   /// Eliminates for output @variable
   visitRule (Rule ruleNode, VisitArgs visitArgs) {
-    if (ruleNode.variable) return [];
+    if (ruleNode.variable) return null;
     return ruleNode;
+
+//2.3.1
+//  visitRule: function (ruleNode, visitArgs) {
+//      if (ruleNode.variable) {
+//          return;
+//      }
+//      return ruleNode;
+//  },
   }
 
   ///
   /// mixin definitions do not get eval'd - this means they keep state
   /// so we have to clear that state here so it isn't used if toCSS is called twice
   ///
-  List visitMixinDefinition (MixinDefinition mixinNode, VisitArgs visitArgs) {
+  visitMixinDefinition (MixinDefinition mixinNode, VisitArgs visitArgs) {
     mixinNode.frames = [];
-    return [];
+
+//2.3.1
+//  visitMixinDefinition: function (mixinNode, visitArgs) {
+//      // mixin definitions do not get eval'd - this means they keep state
+//      // so we have to clear that state here so it isn't used if toCSS is called twice
+//      mixinNode.frames = [];
+//  },
   }
 
   ///
-  List visitExtend (Extend extendNode, VisitArgs visitArgs) => [];
+  visitExtend (Extend extendNode, VisitArgs visitArgs) {}
 
-  /// #
+//2.3.1
+//  visitExtend: function (extendNode, visitArgs) {
+//  },
+
+  ///
   visitComment (Comment commentNode, VisitArgs visitArgs) {
-    if (commentNode.isSilent(this._env)) return [];
+    if (commentNode.isSilent(this._context)) return null;
     return commentNode;
+
+//2.3.1
+//  visitComment: function (commentNode, visitArgs) {
+//      if (commentNode.isSilent(this._context)) {
+//          return;
+//      }
+//      return commentNode;
+//  },
   }
 
   ///
@@ -46,60 +84,208 @@ class ToCSSVisitor extends VisitorBase{
     mediaNode.accept(this._visitor);
     visitArgs.visitDeeper = false;
 
-    if (mediaNode.rules.isEmpty) return [];
+    if (mediaNode.rules.isEmpty) return null;
     return mediaNode;
+
+//2.3.1
+//  visitMedia: function(mediaNode, visitArgs) {
+//      mediaNode.accept(this._visitor);
+//      visitArgs.visitDeeper = false;
+//
+//      if (!mediaNode.rules.length) {
+//          return;
+//      }
+//      return mediaNode;
+//  },
+  }
+
+  ///
+  Import visitImport(Import importNode, VisitArgs visitArgs) {
+    if (importNode.path.currentFileInfo.reference && importNode.css) return null;
+    return importNode;
+
+//2.4.0+6
+//  visitImport: function (importNode, visitArgs) {
+//      if (importNode.path.currentFileInfo.reference !== undefined && importNode.css) {
+//          return;
+//      }
+//      return importNode;
+//  },
+  }
+
+  ///
+  bool hasVisibleChild(Directive directiveNode) {
+    //prepare list of childs
+    var rule;
+    List<Ruleset> bodyRules = directiveNode.rules;
+    // if there is only one nested ruleset and that one has no path, then it is
+    // just fake ruleset that got not replaced and we need to look inside it to
+    // get real childs
+    if (bodyRules.length == 1 && (bodyRules[0].paths == null || bodyRules[0].paths.isEmpty)) {
+      bodyRules = bodyRules[0].rules;
+    }
+
+    for (int r = 0; r < bodyRules.length; r++) {
+      var rule = bodyRules[r];
+      if (rule is GetIsReferencedNode && rule.getIsReferenced()) {
+        // the directive contains something that was referenced (likely by extend)
+        // therefore it needs to be shown in output too
+        return true;
+      }
+    }
+    return false;
+
+//2.4.0+1 inside VisitDirective
+//      function hasVisibleChild(directiveNode) {
+//          //prepare list of childs
+//          var rule, bodyRules = directiveNode.rules;
+//          //if there is only one nested ruleset and that one has no path, then it is
+//          //just fake ruleset that got not replaced and we need to look inside it to
+//          //get real childs
+//          if (bodyRules.length === 1 && (!bodyRules[0].paths || bodyRules[0].paths.length === 0)) {
+//              bodyRules = bodyRules[0].rules;
+//          }
+//          for (var r = 0; r < bodyRules.length; r++) {
+//              rule = bodyRules[r];
+//              if (rule.getIsReferenced && rule.getIsReferenced()) {
+//                  //the directive contains something that was referenced (likely by extend)
+//                  //therefore it needs to be shown in output too
+//                  return true;
+//              }
+//          }
+//          return false;
+//      }
   }
 
   ///
   visitDirective (Directive directiveNode, VisitArgs visitArgs) {
-    if (directiveNode.currentFileInfo.reference && !directiveNode.isReferenced) {
-      return [];
-    }
     if (directiveNode.name == '@charset') {
+      if (!directiveNode.getIsReferenced()) return null;
+
       // Only output the debug info together with subsequent @charset definitions
       // a comment (or @media statement) before the actual @charset directive would
       // be considered illegal css as it has to be on the first line
       if (this.charset) {
         if (directiveNode.debugInfo != null) {
-          Comment comment = new Comment('/* ' + directiveNode.toCSS(this._env).replaceAll(r'\n', '') + ' */\n');
+          Comment comment = new Comment('/* ' + directiveNode.toCSS(this._context).replaceAll(r'\n', '') + ' */\n');
           comment.debugInfo = directiveNode.debugInfo;
           return this._visitor.visit(comment);
         }
-        return [];
+        return null;
       }
       this.charset = true;
     }
-    if (directiveNode.rules != null && directiveNode.rules.rules != null) {
-      this._mergeRules(directiveNode.rules.rules);
+    if (directiveNode.rules != null && directiveNode.rules.isNotEmpty) {
+      // it is still true that it is only one ruleset in array
+      // this is last such moment
+      this._mergeRules(directiveNode.rules[0].rules);
+
+      // process childs
+      directiveNode.accept(this._visitor);
+      visitArgs.visitDeeper = false;
+
+      // the directive was directly referenced and therefore needs to be shown in the output
+      if (directiveNode.getIsReferenced()) return directiveNode;
+
+      // if (directiveNode.rules == null || (directiveNode.rules is List) || directiveNode.rules.rules == null) return null;
+      if (directiveNode.rules == null || directiveNode.rules.isEmpty) return null;
+
+      // the directive was not directly referenced - we need to check whether some of its childs
+      // was referenced
+      if (hasVisibleChild(directiveNode)) {
+        // marking as referenced in case the directive is stored inside another directive
+        directiveNode.markReferenced();
+        return directiveNode;
+      }
+
+      // The directive was not directly referenced and does not contain anything that
+      // was referenced. Therefore it must not be shown in output.
+      return null;
+    } else {
+      if (!directiveNode.getIsReferenced()) return null;
     }
+
     return directiveNode;
 
-//        visitDirective: function(directiveNode, visitArgs) {
-//            if (directiveNode.currentFileInfo.reference && !directiveNode.isReferenced) {
-//                return [];
-//            }
-//            if (directiveNode.name === "@charset") {
-//                // Only output the debug info together with subsequent @charset definitions
-//                // a comment (or @media statement) before the actual @charset directive would
-//                // be considered illegal css as it has to be on the first line
-//                if (this.charset) {
-//                    if (directiveNode.debugInfo) {
-//                        var comment = new tree.Comment("/* " + directiveNode.toCSS(this._env).replace(/\n/g, "")+" */\n");
-//                        comment.debugInfo = directiveNode.debugInfo;
-//                        return this._visitor.visit(comment);
-//                    }
-//                    return [];
-//                }
-//                this.charset = true;
-//            }
-//            if (directiveNode.rules && directiveNode.rules.rules) {
-//                this._mergeRules(directiveNode.rules.rules);
-//            }
-//            return directiveNode;
-//        },
+//2.4.0+1
+//  visitDirective: function(directiveNode, visitArgs) {
+//      if (directiveNode.name === "@charset") {
+//          if (!directiveNode.getIsReferenced()) {
+//              return;
+//          }
+//          // Only output the debug info together with subsequent @charset definitions
+//          // a comment (or @media statement) before the actual @charset directive would
+//          // be considered illegal css as it has to be on the first line
+//          if (this.charset) {
+//              if (directiveNode.debugInfo) {
+//                  var comment = new tree.Comment("/* " + directiveNode.toCSS(this._context).replace(/\n/g, "") + " */\n");
+//                  comment.debugInfo = directiveNode.debugInfo;
+//                  return this._visitor.visit(comment);
+//              }
+//              return;
+//          }
+//          this.charset = true;
+//      }
+//      function hasVisibleChild(directiveNode) {
+//          //prepare list of childs
+//          var rule, bodyRules = directiveNode.rules;
+//          //if there is only one nested ruleset and that one has no path, then it is
+//          //just fake ruleset that got not replaced and we need to look inside it to
+//          //get real childs
+//          if (bodyRules.length === 1 && (!bodyRules[0].paths || bodyRules[0].paths.length === 0)) {
+//              bodyRules = bodyRules[0].rules;
+//          }
+//          for (var r = 0; r < bodyRules.length; r++) {
+//              rule = bodyRules[r];
+//              if (rule.getIsReferenced && rule.getIsReferenced()) {
+//                  //the directive contains something that was referenced (likely by extend)
+//                  //therefore it needs to be shown in output too
+//                  return true;
+//              }
+//          }
+//          return false;
+//      }
+//
+//      if (directiveNode.rules && directiveNode.rules.length) {
+//          //it is still true that it is only one ruleset in array
+//          //this is last such moment
+//          this._mergeRules(directiveNode.rules[0].rules);
+//          //process childs
+//          directiveNode.accept(this._visitor);
+//          visitArgs.visitDeeper = false;
+//
+//          // the directive was directly referenced and therefore needs to be shown in the output
+//          if (directiveNode.getIsReferenced()) {
+//              return directiveNode;
+//          }
+//
+//          if (!directiveNode.rules || !directiveNode.rules.length) {
+//              return ;
+//          }
+//
+//          //the directive was not directly referenced - we need to check whether some of its childs
+//          //was referenced
+//          if (hasVisibleChild(directiveNode)) {
+//              //marking as referenced in case the directive is stored inside another directive
+//              directiveNode.markReferenced();
+//              return directiveNode;
+//          }
+//
+//          //The directive was not directly referenced and does not contain anything that
+//          //was referenced. Therefore it must not be shown in output.
+//          return ;
+//      } else {
+//          if (!directiveNode.getIsReferenced()) {
+//              return;
+//          }
+//      }
+//      return directiveNode;
+//  },
   }
 
-  /// check for errors in Rules with variables (for firstRoot). #
+  ///
+  /// Check for errors in Rules with variables (for firstRoot).
+  ///
   void checkPropertiesInRoot (List<Node> rules) {
     Node ruleNode;
 
@@ -112,16 +298,17 @@ class ToCSSVisitor extends VisitorBase{
       }
     }
 
-//        checkPropertiesInRoot: function(rules) {
-//            var ruleNode;
-//            for(var i = 0; i < rules.length; i++) {
-//                ruleNode = rules[i];
-//                if (ruleNode instanceof tree.Rule && !ruleNode.variable) {
-//                    throw { message: "properties must be inside selector blocks, they cannot be in the root.",
-//                        index: ruleNode.index, filename: ruleNode.currentFileInfo ? ruleNode.currentFileInfo.filename : null};
-//                }
-//            }
-//        },
+//2.3.1
+//  checkPropertiesInRoot: function(rules) {
+//      var ruleNode;
+//      for(var i = 0; i < rules.length; i++) {
+//          ruleNode = rules[i];
+//          if (ruleNode instanceof tree.Rule && !ruleNode.variable) {
+//              throw { message: "properties must be inside selector blocks, they cannot be in the root.",
+//                  index: ruleNode.index, filename: ruleNode.currentFileInfo ? ruleNode.currentFileInfo.filename : null};
+//          }
+//      }
+//  },
   }
 
   ///
@@ -181,7 +368,7 @@ class ToCSSVisitor extends VisitorBase{
       }
 
       // now decide whether we keep the ruleset
-      if (isNotEmpty(nodeRules) && rulesetNode.paths.isNotEmpty) {
+      if (isNotEmpty(nodeRules) && isNotEmpty(rulesetNode.paths)) {
         rulesets.insert(0, rulesetNode);
       }
     } else {
@@ -195,76 +382,77 @@ class ToCSSVisitor extends VisitorBase{
     if (rulesets.length == 1) return rulesets.first;
     return rulesets;
 
-//        visitRuleset: function (rulesetNode, visitArgs) {
-//            var rule, rulesets = [];
-//            if (rulesetNode.firstRoot) {
-//                this.checkPropertiesInRoot(rulesetNode.rules);
-//            }
-//            if (! rulesetNode.root) {
-//                if (rulesetNode.paths) {
-//                    rulesetNode.paths = rulesetNode.paths
-//                        .filter(function(p) {
-//                            var i;
-//                            if (p[0].elements[0].combinator.value === ' ') {
-//                                p[0].elements[0].combinator = new(tree.Combinator)('');
-//                            }
-//                            for(i = 0; i < p.length; i++) {
-//                                if (p[i].getIsReferenced() && p[i].getIsOutput()) {
-//                                    return true;
-//                                }
-//                            }
-//                            return false;
-//                        });
-//                }
+//2.3.1
+//  visitRuleset: function (rulesetNode, visitArgs) {
+//      var rule, rulesets = [];
+//      if (rulesetNode.firstRoot) {
+//          this.checkPropertiesInRoot(rulesetNode.rules);
+//      }
+//      if (! rulesetNode.root) {
+//          if (rulesetNode.paths) {
+//              rulesetNode.paths = rulesetNode.paths
+//                  .filter(function(p) {
+//                      var i;
+//                      if (p[0].elements[0].combinator.value === ' ') {
+//                          p[0].elements[0].combinator = new(tree.Combinator)('');
+//                      }
+//                      for(i = 0; i < p.length; i++) {
+//                          if (p[i].getIsReferenced() && p[i].getIsOutput()) {
+//                              return true;
+//                          }
+//                      }
+//                      return false;
+//                  });
+//          }
 //
-//                // Compile rules and rulesets
-//                var nodeRules = rulesetNode.rules, nodeRuleCnt = nodeRules ? nodeRules.length : 0;
-//                for (var i = 0; i < nodeRuleCnt; ) {
-//                    rule = nodeRules[i];
-//                    if (rule && rule.rules) {
-//                        // visit because we are moving them out from being a child
-//                        rulesets.push(this._visitor.visit(rule));
-//                        nodeRules.splice(i, 1);
-//                        nodeRuleCnt--;
-//                        continue;
-//                    }
-//                    i++;
-//                }
-//                // accept the visitor to remove rules and refactor itself
-//                // then we can decide now whether we want it or not
-//                if (nodeRuleCnt > 0) {
-//                    rulesetNode.accept(this._visitor);
-//                } else {
-//                    rulesetNode.rules = null;
-//                }
-//                visitArgs.visitDeeper = false;
+//          // Compile rules and rulesets
+//          var nodeRules = rulesetNode.rules, nodeRuleCnt = nodeRules ? nodeRules.length : 0;
+//          for (var i = 0; i < nodeRuleCnt; ) {
+//              rule = nodeRules[i];
+//              if (rule && rule.rules) {
+//                  // visit because we are moving them out from being a child
+//                  rulesets.push(this._visitor.visit(rule));
+//                  nodeRules.splice(i, 1);
+//                  nodeRuleCnt--;
+//                  continue;
+//              }
+//              i++;
+//          }
+//          // accept the visitor to remove rules and refactor itself
+//          // then we can decide now whether we want it or not
+//          if (nodeRuleCnt > 0) {
+//              rulesetNode.accept(this._visitor);
+//          } else {
+//              rulesetNode.rules = null;
+//          }
+//          visitArgs.visitDeeper = false;
 //
-//                nodeRules = rulesetNode.rules;
-//                if (nodeRules) {
-//                    this._mergeRules(nodeRules);
-//                    nodeRules = rulesetNode.rules;
-//                }
-//                if (nodeRules) {
-//                    this._removeDuplicateRules(nodeRules);
-//                    nodeRules = rulesetNode.rules;
-//                }
+//          nodeRules = rulesetNode.rules;
+//          if (nodeRules) {
+//              this._mergeRules(nodeRules);
+//              nodeRules = rulesetNode.rules;
+//          }
+//          if (nodeRules) {
+//              this._removeDuplicateRules(nodeRules);
+//              nodeRules = rulesetNode.rules;
+//          }
 //
-//                // now decide whether we keep the ruleset
-//                if (nodeRules && nodeRules.length > 0 && rulesetNode.paths.length > 0) {
-//                    rulesets.splice(0, 0, rulesetNode);
-//                }
-//            } else {
-//                rulesetNode.accept(this._visitor);
-//                visitArgs.visitDeeper = false;
-//                if (rulesetNode.firstRoot || (rulesetNode.rules && rulesetNode.rules.length > 0)) {
-//                    rulesets.splice(0, 0, rulesetNode);
-//                }
-//            }
-//            if (rulesets.length === 1) {
-//                return rulesets[0];
-//            }
-//            return rulesets;
-//        },
+//          // now decide whether we keep the ruleset
+//          if (nodeRules && nodeRules.length > 0 && rulesetNode.paths.length > 0) {
+//              rulesets.splice(0, 0, rulesetNode);
+//          }
+//      } else {
+//          rulesetNode.accept(this._visitor);
+//          visitArgs.visitDeeper = false;
+//          if (rulesetNode.firstRoot || (rulesetNode.rules && rulesetNode.rules.length > 0)) {
+//              rulesets.splice(0, 0, rulesetNode);
+//          }
+//      }
+//      if (rulesets.length === 1) {
+//          return rulesets[0];
+//      }
+//      return rulesets;
+//  },
   }
 
   ///
@@ -285,9 +473,9 @@ class ToCSSVisitor extends VisitorBase{
         } else {
           ruleList = ruleCache[rrule.name];
           if (ruleList is Rule) {
-            ruleList = ruleCache[rrule.name] = [ruleCache[rrule.name].toCSS(this._env)];
+            ruleList = ruleCache[rrule.name] = [ruleCache[rrule.name].toCSS(this._context)];
           }
-          String ruleCSS = rrule.toCSS(this._env);
+          String ruleCSS = rrule.toCSS(this._context);
           if ((ruleList as List).contains(ruleCSS)) {
             rules.removeAt(i);
           } else {
@@ -297,33 +485,34 @@ class ToCSSVisitor extends VisitorBase{
       }
     }
 
-//        _removeDuplicateRules: function(rules) {
-//            if (!rules) { return; }
+//2.3.1
+//  _removeDuplicateRules: function(rules) {
+//      if (!rules) { return; }
 //
-//            // remove duplicates
-//            var ruleCache = {},
-//                ruleList, rule, i;
+//      // remove duplicates
+//      var ruleCache = {},
+//          ruleList, rule, i;
 //
-//            for(i = rules.length - 1; i >= 0 ; i--) {
-//                rule = rules[i];
-//                if (rule instanceof tree.Rule) {
-//                    if (!ruleCache[rule.name]) {
-//                        ruleCache[rule.name] = rule;
-//                    } else {
-//                        ruleList = ruleCache[rule.name];
-//                        if (ruleList instanceof tree.Rule) {
-//                            ruleList = ruleCache[rule.name] = [ruleCache[rule.name].toCSS(this._env)];
-//                        }
-//                        var ruleCSS = rule.toCSS(this._env);
-//                        if (ruleList.indexOf(ruleCSS) !== -1) {
-//                            rules.splice(i, 1);
-//                        } else {
-//                            ruleList.push(ruleCSS);
-//                        }
-//                    }
-//                }
-//            }
-//        },
+//      for(i = rules.length - 1; i >= 0 ; i--) {
+//          rule = rules[i];
+//          if (rule instanceof tree.Rule) {
+//              if (!ruleCache[rule.name]) {
+//                  ruleCache[rule.name] = rule;
+//              } else {
+//                  ruleList = ruleCache[rule.name];
+//                  if (ruleList instanceof tree.Rule) {
+//                      ruleList = ruleCache[rule.name] = [ruleCache[rule.name].toCSS(this._context)];
+//                  }
+//                  var ruleCSS = rule.toCSS(this._context);
+//                  if (ruleList.indexOf(ruleCSS) !== -1) {
+//                      rules.splice(i, 1);
+//                  } else {
+//                      ruleList.push(ruleCSS);
+//                  }
+//              }
+//          }
+//      }
+//  },
   }
 
   ///
@@ -382,74 +571,76 @@ class ToCSSVisitor extends VisitorBase{
       }
     });
 
-//        _mergeRules: function (rules) {
-//            if (!rules) { return; }
+//2.3.1
+//  _mergeRules: function (rules) {
+//      if (!rules) { return; }
 //
-//            var groups = {},
-//                parts,
-//                rule,
-//                key;
+//      var groups = {},
+//          parts,
+//          rule,
+//          key;
 //
-//            for (var i = 0; i < rules.length; i++) {
-//                rule = rules[i];
+//      for (var i = 0; i < rules.length; i++) {
+//          rule = rules[i];
 //
-//                if ((rule instanceof tree.Rule) && rule.merge) {
-//                    key = [rule.name,
-//                        rule.important ? "!" : ""].join(",");
+//          if ((rule instanceof tree.Rule) && rule.merge) {
+//              key = [rule.name,
+//                  rule.important ? "!" : ""].join(",");
 //
-//                    if (!groups[key]) {
-//                        groups[key] = [];
-//                    } else {
-//                        rules.splice(i--, 1);
-//                    }
+//              if (!groups[key]) {
+//                  groups[key] = [];
+//              } else {
+//                  rules.splice(i--, 1);
+//              }
 //
-//                    groups[key].push(rule);
-//                }
-//            }
+//              groups[key].push(rule);
+//          }
+//      }
 //
-//            Object.keys(groups).map(function (k) {
+//      Object.keys(groups).map(function (k) {
 //
-//                function toExpression(values) {
-//                    return new (tree.Expression)(values.map(function (p) {
-//                        return p.value;
-//                    }));
-//                }
+//          function toExpression(values) {
+//              return new (tree.Expression)(values.map(function (p) {
+//                  return p.value;
+//              }));
+//          }
 //
-//                function toValue(values) {
-//                    return new (tree.Value)(values.map(function (p) {
-//                        return p;
-//                    }));
-//                }
+//          function toValue(values) {
+//              return new (tree.Value)(values.map(function (p) {
+//                  return p;
+//              }));
+//          }
 //
-//                parts = groups[k];
+//          parts = groups[k];
 //
-//                if (parts.length > 1) {
-//                    rule = parts[0];
-//                    var spacedGroups = [];
-//                    var lastSpacedGroup = [];
-//                    parts.map(function (p) {
-//                    if (p.merge==="+") {
-//                        if (lastSpacedGroup.length > 0) {
-//                                spacedGroups.push(toExpression(lastSpacedGroup));
-//                            }
-//                            lastSpacedGroup = [];
-//                        }
-//                        lastSpacedGroup.push(p);
-//                    });
-//                    spacedGroups.push(toExpression(lastSpacedGroup));
-//                    rule.value = toValue(spacedGroups);
-//                }
-//            });
-//        }
+//          if (parts.length > 1) {
+//              rule = parts[0];
+//              var spacedGroups = [];
+//              var lastSpacedGroup = [];
+//              parts.map(function (p) {
+//              if (p.merge === "+") {
+//                  if (lastSpacedGroup.length > 0) {
+//                          spacedGroups.push(toExpression(lastSpacedGroup));
+//                      }
+//                      lastSpacedGroup = [];
+//                  }
+//                  lastSpacedGroup.push(p);
+//              });
+//              spacedGroups.push(toExpression(lastSpacedGroup));
+//              rule.value = toValue(spacedGroups);
+//          }
+//      });
+//  }
   }
 
 
   /// func visitor.visit distribuitor
   Function visitFtn(Node node) {
     if (node is Comment)    return this.visitComment;
+    if (node is Media)      return this.visitMedia;
     if (node is Directive)  return this.visitDirective;
     if (node is Extend)     return this.visitExtend;
-    if (node is Media)      return this.visitMedia;
+    if (node is Import)     return this.visitImport;
     if (node is MixinDefinition) return this.visitMixinDefinition;
     if (node is Rule)       return this.visitRule;
     if (node is Ruleset)    return this.visitRuleset;

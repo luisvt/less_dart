@@ -1,4 +1,4 @@
-//source: less/tree/import.js 1.7.5 -> 2.3.1
+//source: less/tree/import.js 2.4.0+6
 
 part of tree.less;
 
@@ -42,7 +42,6 @@ class Import extends Node {
   final String type = 'Import';
 
   ///
-  //2.3.1 ok
   Import(Node this.path, Node this.features, ImportOptions this.options, int this.index,
       [FileInfo this.currentFileInfo]) {
     RegExp rPathValue = new RegExp(r'[#\.\&\?\/]css([\?;].*)?$');
@@ -74,7 +73,6 @@ class Import extends Node {
   }
 
   ///
-  //2.3.1 ok
   void accept(Visitor visitor) {
     if (this.features != null) this.features = visitor.visit(this.features);
 
@@ -95,9 +93,8 @@ class Import extends Node {
   }
 
   ///
-  //2.3.1 ok
   void genCSS(Contexts context, Output output) {
-    if (this.css) {
+    if (this.css && !this.path.currentFileInfo.reference) {
       output.add('@import ', this.currentFileInfo, this.index);
       this.path.genCSS(context, output);
       if (this.features != null) {
@@ -107,9 +104,9 @@ class Import extends Node {
       output.add(';');
     }
 
-//2.3.1
+//2.4.0+6
 //  Import.prototype.genCSS = function (context, output) {
-//      if (this.css) {
+//      if (this.css && this.path.currentFileInfo.reference === undefined) {
 //          output.add("@import ", this.currentFileInfo, this.index);
 //          this.path.genCSS(context, output);
 //          if (this.features) {
@@ -121,19 +118,15 @@ class Import extends Node {
 //  };
   }
 
-//      toCSS: tree.toCSS,
-
   ///
   /// get the file path to import.
   ///
-  //2.3.1 - TODO pending upgrade
   String getPath() {
     RegExp rPath = new RegExp(r'(\.[a-z]*$)|([\?;].*)$'); //1.7.5 *****
 
     if (this.path is Quoted) {
-        String path = this.path.value; //1.7.5 *****
-        return (this.css || rPath.hasMatch(path))? path : path + '.less'; //1.7.5 *****
-//      return this.path.value; //2.3.1 *****
+        String path = this.path.value;
+          return this.path.value;
     } else if (this.path is URL) {
       return this.path.value.value;
     }
@@ -148,20 +141,9 @@ class Import extends Node {
 //      }
 //      return null;
 //  };
-//1.7.5
-//      getPath: function () {
-//          if (this.path instanceof tree.Quoted) {
-//              var path = this.path.value;
-//              return (this.css !== undefined || /(\.[a-z]*$)|([\?;].*)$/.test(path)) ? path : path + '.less';
-//          } else if (this.path instanceof tree.URL) {
-//              return this.path.value.value;
-//          }
-//          return null;
-//      },
   }
 
   ///
-  //2.3.1 ok
   bool isVariableImport() {
     var path = this.path;
     if (path is URL) path = path.value;
@@ -185,7 +167,6 @@ class Import extends Node {
   ///
   /// Resolves @var in the path
   ///
-  //2.3.1 ok
   Import evalForImport(Contexts context) {
     Node path = this.path;
     if (path is URL) path = path.value;
@@ -203,7 +184,6 @@ class Import extends Node {
   }
 
   ///
-  //2.3.1 ok
   Node evalPath(Contexts context) {
     Node path = this.path.eval(context);
     String rootpath = (this.currentFileInfo != null) ? this.currentFileInfo.rootpath : null;
@@ -245,7 +225,6 @@ class Import extends Node {
   /// Replaces the @import rule with the imported ruleset
   /// Returns Node or List<Node>
   ///
-  //2.3.1 ok
    eval(Contexts context) {
     Node features = (this.features != null) ? this.features.eval(context) : null;
 
@@ -311,6 +290,7 @@ class ImportOptions {
   bool once;
   bool inline;
   bool reference;
+  bool optional;
 
   void operator []= (String optionName, bool value) {
     switch (optionName) {
@@ -331,6 +311,9 @@ class ImportOptions {
         break;
       case 'reference':
         reference = value;
+        break;
+      case 'optional':
+        optional = value;
     }
   }
 }

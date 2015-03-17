@@ -6,8 +6,9 @@ import 'package:path/path.dart' as path;
 
 import 'src/less_error.dart';
 import 'src/less_options.dart';
-import 'src/nodejs/nodejs.dart';
+import 'src/logger.dart';
 import 'src/parser/parser.dart';
+import 'src/render/render.dart';
 import 'src/tree/tree.dart';
 
 export 'src/functions/functions.dart' show FunctionBase, defineMethod;
@@ -22,16 +23,16 @@ class Less {
   int currentErrorCode = 0;
   bool continueProcessing = true;
 
-  NodeConsole console;
+  Logger logger;
   LessOptions _options;
 
   Less(){
-    console = new NodeConsole(stderr); // is important the order
+    logger = new Logger(stderr); // care the order
     _options = new LessOptions();
   }
 
   ///
-  /// Rransform a less file to css file.
+  /// Transform a less file to css file.
   ///
   /// [args] has the options and input/output file names.
   /// [modifyOptions] let programtically modify the options.
@@ -52,6 +53,7 @@ class Less {
     }
 
     if (modifyOptions != null) modifyOptions(this._options);
+    this._options.pluginLoader.start();
 
     if(_options.input != '-') {
       // Default to .less
@@ -60,7 +62,7 @@ class Less {
 
       File file = new File(filename);
       if (!file.existsSync()) {
-        console.log('Error cannot open file ${_options.input}');
+        logger.error('Error cannot open file ${_options.input}');
         currentErrorCode = 3;
         return new Future.value(currentErrorCode);
       }
@@ -70,7 +72,7 @@ class Less {
         return parseLessFile(content);
       })
       .catchError((e){
-        console.log('Error reading ${_options.input}');
+        logger.error('Error reading ${_options.input}');
         currentErrorCode = 3;
         return new Future.value(currentErrorCode);
       });
@@ -112,56 +114,76 @@ class Less {
   }
 
   Future parseLessFile(String data){
-    data = _options.globalVariables + data;
-    if (_options.modifyVariables.isNotEmpty) data = data + '\n' + _options.modifyVariables;
-
     Parser parser = new Parser(_options);
     return parser.parse(data)
     .then((Ruleset tree){
-      Function writeSourceMap = _options.writeSourceMap;
-      String css;
+      RenderResult result;
 
       if (tree == null) return new Future.value(currentErrorCode);
 
       //debug
       if(_options.showTreeLevel == 0) {
-        css = tree.toTree(_options).toString();
+        String css = tree.toTree(_options).toString();
         stdout.write(css);
         return new Future.value(currentErrorCode);
       }
 
-      if (_options.depends) {
-        for (var file in parser.imports.files) stdout.write(file + ' ');
-      } else {
-        try {
-          if (_options.lint) writeSourceMap = (String output){};
-          css = tree.rootToCSS((_options.clone()
-                              ..writeSourceMap = writeSourceMap), parser.context);
-          if (!_options.lint) {
-            if (_options.output.isNotEmpty) {
-              //ensureDirectory(output);
-              new File(_options.output)
-                ..createSync(recursive: true)
-                ..writeAsStringSync(css);
-              if (_options.verbose) console.log('lessc: wrote ${_options.output}');
-            } else {
-              stdout.write(css);
-            }
-          }
+      try {
+        result = new ParseTree(tree, parser.imports).toCSS(_options.clone(), parser.context);
 
-        } on LessExceptionError catch (e) {
-          console.log(e.toString());
-          currentErrorCode = 2;
-          return new Future.value(currentErrorCode);
+        if (!_options.lint) {
+          writeOutput(_options.output, result, _options);
         }
+
+      } on LessExceptionError catch (e) {
+        logger.error(e.toString());
+        currentErrorCode = 2;
+        return new Future.value(currentErrorCode);
       }
 
       return new Future.value(currentErrorCode);
     })
     .catchError((e){
-      console.log(e.toString());
+      logger.error(e.toString());
       currentErrorCode = 1;
       return new Future.value(currentErrorCode);
     });
+  }
+
+  /// Writes css file, map file and dependencies
+  writeOutput(String output, RenderResult result, LessOptions options) {
+    //css
+    if (output.isNotEmpty) {
+      writeFile(output, result.css);
+    } else {
+      stdout.write(result.css);
+    }
+
+    //map
+    if (options.sourceMap && !options.sourceMapOptions.sourceMapFileInline) {
+      writeFile(options.sourceMapOptions.sourceMapFullFilename, result.map);
+    }
+
+    //dependencies
+    if (options.depends) {
+      String depends = options.outputBase + ': ';
+      result.imports.forEach((item){ depends += item + ' ';});
+      logger.log(depends);
+    }
+  }
+
+  /// Creates the file [filename] with [content]
+  void writeFile(String filename, String content) {
+    try {
+      new File(filename)
+        ..createSync(recursive: true)
+        ..writeAsStringSync(content);
+      logger.info('lessc: wrote ${filename}');
+    } catch (e) {
+      LessError error = new LessError(
+          type: 'File',
+          message: 'lessc: failed to create file ${filename}\n${e.toString()}');
+      throw new LessExceptionError(error);
+    }
   }
 }
