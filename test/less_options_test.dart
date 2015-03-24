@@ -2,6 +2,7 @@ import 'package:unittest/unittest.dart';
 
 import '../lib/src/less_options.dart';
 import '../lib/src/logger.dart';
+import 'dart:io';
 
 main(){
   SimpleConfiguration config = new SimpleConfiguration();
@@ -143,7 +144,8 @@ less_options_test(){
     });
 
     test('-include-path', (){
-      result = options.parse(getArgument('-include-path=lib/lessIncludes;lib/otherIncludes'));
+      var separator = Platform.isWindows ? ';' : ':';
+      result = options.parse(getArgument('-include-path=lib/lessIncludes${separator}lib/otherIncludes'));
       expect(result, true);
       expect(options.paths, contains('lib/otherIncludes'));
 
