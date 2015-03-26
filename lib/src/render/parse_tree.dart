@@ -9,7 +9,7 @@ class ParseTree {
   Environment environment;
 
   ///
-  ParseTree(Ruleset this.root, ImportManager this.imports) {
+  ParseTree(this.root, this.imports) {
     this.environment = new Environment();
   }
 

@@ -40,7 +40,7 @@ class Parsers {
   FileInfo fileInfo;
   Mixin mixin;
 
-  Parsers(String this.input, Contexts this.context){
+  Parsers(this.input, this.context){
     context.input = input;
     fileInfo = context.currentFileInfo;
     parserInput = new ParserInput(input, context);

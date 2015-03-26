@@ -44,7 +44,7 @@ class ImportVisitor extends VisitorBase {
   /// Replaces @import nodes with the file content
   ///
   Future run(Node root) {
-    this._visitor.visit(root);
+    _visitor.visit(root);
 
 //    return Future
 //        .wait(runners, eagerError: true)

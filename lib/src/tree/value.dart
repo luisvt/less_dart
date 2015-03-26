@@ -8,8 +8,8 @@ class Value extends Node {
   final String type = 'Value';
 
   ///
-  Value(List<Node> this.value) {
-    if (this.value == null) throw new LessExceptionError(new LessError(
+  Value(this.value) {
+    if (value == null) throw new LessExceptionError(new LessError(
         message: 'Value requires an array argument'));
   }
 
@@ -23,7 +23,7 @@ class Value extends Node {
 
   ///
   void accept(Visitor visitor) {
-    if (this.value != null) this.value = visitor.visitArray(this.value);
+    if (value != null) value = visitor.visitArray(value);
 
 //2.3.1
 //  Value.prototype.accept = function (visitor) {
@@ -35,10 +35,10 @@ class Value extends Node {
 
   ///
   Node eval(Contexts context) {
-    if (this.value.length == 1) {
-      return this.value.first.eval(context);
+    if (value.length == 1) {
+      return value.first.eval(context);
     } else {
-      return new Value(this.value.map((Node v){
+      return new Value(value.map((Node v){
         return v.eval(context);
       }).toList());
     }
@@ -57,9 +57,9 @@ class Value extends Node {
 
   ///
   void genCSS(Contexts context, Output output) {
-    for (int i = 0; i < this.value.length; i++) {
-      this.value[i].genCSS(context, output);
-      if (i+1 < this.value.length) output.add((context != null && context.compress) ? ',' : ', ');
+    for (int i = 0; i < value.length; i++) {
+      value[i].genCSS(context, output);
+      if (i+1 < value.length) output.add((context != null && context.compress) ? ',' : ', ');
     }
 
 //2.3.1

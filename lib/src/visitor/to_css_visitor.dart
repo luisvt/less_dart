@@ -10,9 +10,8 @@ class ToCSSVisitor extends VisitorBase{
   Visitor _visitor;
 
   ///
-  ToCSSVisitor(Contexts context) {
-    this._visitor = new Visitor(this);
-    this._context = context;
+  ToCSSVisitor(this._context) {
+    _visitor = new Visitor(this);
 
 //2.3.1
 //  var ToCSSVisitor = function(context) {
@@ -22,7 +21,7 @@ class ToCSSVisitor extends VisitorBase{
   }
 
   ///
-  Node run (Ruleset root) => this._visitor.visit(root);
+  Node run (Ruleset root) => _visitor.visit(root);
 
 //2.3.1
 //  run: function (root) {
@@ -67,7 +66,7 @@ class ToCSSVisitor extends VisitorBase{
 
   ///
   visitComment (Comment commentNode, VisitArgs visitArgs) {
-    if (commentNode.isSilent(this._context)) return null;
+    if (commentNode.isSilent(_context)) return null;
     return commentNode;
 
 //2.3.1
@@ -81,7 +80,7 @@ class ToCSSVisitor extends VisitorBase{
 
   ///
   visitMedia (Media mediaNode, VisitArgs visitArgs) {
-    mediaNode.accept(this._visitor);
+    mediaNode.accept(_visitor);
     visitArgs.visitDeeper = false;
 
     if (mediaNode.rules.isEmpty) return null;
@@ -165,23 +164,23 @@ class ToCSSVisitor extends VisitorBase{
       // Only output the debug info together with subsequent @charset definitions
       // a comment (or @media statement) before the actual @charset directive would
       // be considered illegal css as it has to be on the first line
-      if (this.charset) {
+      if (charset) {
         if (directiveNode.debugInfo != null) {
-          Comment comment = new Comment('/* ' + directiveNode.toCSS(this._context).replaceAll(r'\n', '') + ' */\n');
+          Comment comment = new Comment('/* ' + directiveNode.toCSS(_context).replaceAll(r'\n', '') + ' */\n');
           comment.debugInfo = directiveNode.debugInfo;
-          return this._visitor.visit(comment);
+          return _visitor.visit(comment);
         }
         return null;
       }
-      this.charset = true;
+      charset = true;
     }
     if (directiveNode.rules != null && directiveNode.rules.isNotEmpty) {
       // it is still true that it is only one ruleset in array
       // this is last such moment
-      this._mergeRules(directiveNode.rules[0].rules);
+      _mergeRules(directiveNode.rules[0].rules);
 
       // process childs
-      directiveNode.accept(this._visitor);
+      directiveNode.accept(_visitor);
       visitArgs.visitDeeper = false;
 
       // the directive was directly referenced and therefore needs to be shown in the output
@@ -316,7 +315,7 @@ class ToCSSVisitor extends VisitorBase{
     Node rule;
     List<Node> rulesets = [];
 
-    if (rulesetNode.firstRoot) this.checkPropertiesInRoot(rulesetNode.rules);
+    if (rulesetNode.firstRoot) checkPropertiesInRoot(rulesetNode.rules);
 
     if (!rulesetNode.root) {
       if (rulesetNode.paths != null) {
@@ -340,7 +339,7 @@ class ToCSSVisitor extends VisitorBase{
         rule = nodeRules[i];
         if (rule != null && rule.rules != null) {
           // visit because we are moving them out from being a child
-          rulesets.add(this._visitor.visit(rule));
+          rulesets.add(_visitor.visit(rule));
           nodeRules.removeAt(i);
           nodeRuleCnt--;
           continue;
@@ -351,7 +350,7 @@ class ToCSSVisitor extends VisitorBase{
       // accept the visitor to remove rules and refactor itself
       // then we can decide now whether we want it or not
       if (nodeRuleCnt > 0) {
-        rulesetNode.accept(this._visitor);
+        rulesetNode.accept(_visitor);
       } else {
         rulesetNode.rules = null;
       }
@@ -359,11 +358,11 @@ class ToCSSVisitor extends VisitorBase{
 
       nodeRules = rulesetNode.rules;
       if (nodeRules != null) {
-        this._mergeRules(nodeRules);
+        _mergeRules(nodeRules);
         nodeRules = rulesetNode.rules;
       }
       if (nodeRules != null) {
-        this._removeDuplicateRules(nodeRules);
+        _removeDuplicateRules(nodeRules);
         nodeRules = rulesetNode.rules;
       }
 
@@ -372,7 +371,7 @@ class ToCSSVisitor extends VisitorBase{
         rulesets.insert(0, rulesetNode);
       }
     } else {
-      rulesetNode.accept(this._visitor);
+      rulesetNode.accept(_visitor);
       visitArgs.visitDeeper = false;
       if (rulesetNode.firstRoot || isNotEmpty(rulesetNode.rules)) {
         rulesets.insert(0, rulesetNode);
@@ -473,9 +472,9 @@ class ToCSSVisitor extends VisitorBase{
         } else {
           ruleList = ruleCache[rrule.name];
           if (ruleList is Rule) {
-            ruleList = ruleCache[rrule.name] = [ruleCache[rrule.name].toCSS(this._context)];
+            ruleList = ruleCache[rrule.name] = [ruleCache[rrule.name].toCSS(_context)];
           }
-          String ruleCSS = rrule.toCSS(this._context);
+          String ruleCSS = rrule.toCSS(_context);
           if ((ruleList as List).contains(ruleCSS)) {
             rules.removeAt(i);
           } else {
@@ -635,14 +634,14 @@ class ToCSSVisitor extends VisitorBase{
 
   /// func visitor.visit distribuitor
   Function visitFtn(Node node) {
-    if (node is Comment)    return this.visitComment;
-    if (node is Media)      return this.visitMedia;
-    if (node is Directive)  return this.visitDirective;
-    if (node is Extend)     return this.visitExtend;
-    if (node is Import)     return this.visitImport;
-    if (node is MixinDefinition) return this.visitMixinDefinition;
-    if (node is Rule)       return this.visitRule;
-    if (node is Ruleset)    return this.visitRuleset;
+    if (node is Comment)    return visitComment;
+    if (node is Media)      return visitMedia;
+    if (node is Directive)  return visitDirective;
+    if (node is Extend)     return visitExtend;
+    if (node is Import)     return visitImport;
+    if (node is MixinDefinition) return visitMixinDefinition;
+    if (node is Rule)       return visitRule;
+    if (node is Ruleset)    return visitRuleset;
 
     return null;
   }

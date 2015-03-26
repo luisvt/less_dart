@@ -150,18 +150,18 @@ class Contexts {
     if (options == null) return;
     parseCopyProperties(options);
 
-    if (this.contents == null) this.contents = {};
-    if (this.contentsIgnoredChars == null) this.contentsIgnoredChars = {};
-    if (this.files == null) this.files = {};
+    if (contents == null) contents = {};
+    if (contentsIgnoredChars == null) contentsIgnoredChars = {};
+    if (files == null) files = {};
 //      if (this.paths is "String") this.paths = [this.paths];
 
-    if (this.currentFileInfo == null) {
+    if (currentFileInfo == null) {
       String filename = options.filename != '' ? options.filename : 'input';
       String entryPath = filename.replaceAll(new RegExp(r'[^\/\\]*$'), '');
       if (options != null) options.filename = null;
       currentFileInfo = new FileInfo()
             ..filename = filename
-            ..relativeUrls = this.relativeUrls
+            ..relativeUrls = relativeUrls
             ..rootpath = (options != null && options.rootpath != null) ? options.rootpath : ''
             ..currentDirectory = entryPath
             ..entryPath = entryPath
@@ -265,8 +265,8 @@ class Contexts {
   /// parensStack push
   ///
   void inParenthesis() {
-    if (this.parensStack == null) this.parensStack = [];
-    this.parensStack.add(true);
+    if (parensStack == null) parensStack = [];
+    parensStack.add(true);
 
 //2.2.0
 //  contexts.Eval.prototype.inParenthesis = function () {
@@ -280,7 +280,7 @@ class Contexts {
   ///
   /// parensStack pop. Always return true.
   ///
-  bool outOfParenthesis() => this.parensStack.removeLast();
+  bool outOfParenthesis() => parensStack.removeLast();
 
 //2.2.0
 //  contexts.Eval.prototype.outOfParenthesis = function () {
@@ -288,7 +288,7 @@ class Contexts {
 //  };
 
   ///
-  bool isMathOn() => this.strictMath ? (this.parensStack != null && this.parensStack.isNotEmpty) : true;
+  bool isMathOn() => strictMath ? (parensStack != null && parensStack.isNotEmpty) : true;
 
 //2.2.0
 //  contexts.Eval.prototype.isMathOn = function () {

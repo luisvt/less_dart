@@ -11,9 +11,9 @@ class ExtendFinderVisitor extends VisitorBase {
 
   ///
   ExtendFinderVisitor() {
-    this._visitor = new Visitor(this);
-    this.contexts = [];
-    this.allExtendsStack = [[]];
+    _visitor = new Visitor(this);
+    contexts = [];
+    allExtendsStack = [[]];
 
 //2.3.1
 //  var ExtendFinderVisitor = function() {
@@ -25,8 +25,8 @@ class ExtendFinderVisitor extends VisitorBase {
 
   ///
   Ruleset run(Ruleset root) {
-    root = this._visitor.visit(root);
-    root.allExtends = this.allExtendsStack[0];
+    root = _visitor.visit(root);
+    root.allExtends = allExtendsStack[0];
     return root;
 
 //2.3.1

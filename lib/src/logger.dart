@@ -17,8 +17,8 @@ class Logger {
   static Map<int, Logger> cache = {};
 
   Logger._(this.stderr){
-    if (this.stderr == null) this.stderr = new StringBuffer();
-    this.logLevel = logLevelWarn;
+    if (stderr == null) stderr = new StringBuffer();
+    logLevel = logLevelWarn;
   }
 
   /*

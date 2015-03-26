@@ -7,24 +7,24 @@ class Visitor extends VisitorBase{
   VisitArgs _visitArgs = new VisitArgs(true);
 
   ///
-  Visitor(VisitorBase this._implementation);
+  Visitor(this._implementation);
 
   /// Process a [node] and the subtree
   visit(node) {
     if (node == null) return node;
     if (node is! Node) return node;
 
-    this._visitArgs.visitDeeper = true;
+    _visitArgs.visitDeeper = true;
 
-    Function func = this._implementation.visitFtn(node);
-    Function funcOut = this._implementation.visitFtnOut(node);
+    Function func = _implementation.visitFtn(node);
+    Function funcOut = _implementation.visitFtnOut(node);
 
     if (func != null) {
-      var newNode = func(node, this._visitArgs); //Node or List
-      if (this._implementation.isReplacing) node = newNode;
+      var newNode = func(node, _visitArgs); //Node or List
+      if (_implementation.isReplacing) node = newNode;
     }
 
-    if (this._visitArgs.visitDeeper && node != null && (node is Node)) node.accept(this);
+    if (_visitArgs.visitDeeper && node != null && (node is Node)) node.accept(this);
 
     if (funcOut != null) funcOut(node);
 
@@ -84,21 +84,21 @@ class Visitor extends VisitorBase{
     if (nodes == null) return nodes;
 
     // Non-replacing
-    if (nonReplacing || !this._implementation.isReplacing) {
-      for (int i = 0; i < nodes.length; i++) this.visit(nodes[i]);
+    if (nonReplacing || !_implementation.isReplacing) {
+      for (int i = 0; i < nodes.length; i++) visit(nodes[i]);
       return nodes;
     }
 
     // Replacing
     List out = [];
     for (int i = 0; i < nodes.length; i++) {
-      var evald = this.visit(nodes[i]);
+      var evald = visit(nodes[i]);
       if (evald == null) continue;
 
       if (evald is! List) {
         out.add(evald);
       } else if (evald.isNotEmpty) {
-        this.flatten(evald, out);
+        flatten(evald, out);
       }
     }
     return out;
@@ -160,7 +160,7 @@ class Visitor extends VisitorBase{
         if (nestedItem is Node) {
           out.add(nestedItem);
         } else if (nestedItem is List) {
-          this.flatten(nestedItem, out);
+          flatten(nestedItem, out);
         }
       }
     }

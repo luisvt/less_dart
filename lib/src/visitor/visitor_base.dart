@@ -51,5 +51,5 @@ class VisitorBase {
 class VisitArgs {
   bool visitDeeper;
 
-  VisitArgs(bool this.visitDeeper);
+  VisitArgs(this.visitDeeper);
 }

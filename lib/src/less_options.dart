@@ -171,7 +171,7 @@ class LessOptions {
 
   ///
   LessOptions() {
-    this.pluginLoader = new PluginLoader(this);
+    pluginLoader = new PluginLoader(this);
   }
 
   ///
@@ -518,31 +518,26 @@ class LessOptions {
     return true;
   }
 
-  LessOptions clone() {
-    LessOptions op = new LessOptions();
-
-    op.silent           = this.silent;
-    op.verbose          = this.verbose;
-    op.ieCompat         = this.ieCompat;
-    op.compress         = this.compress;
-    op.cleancssOptions  = this.cleancssOptions;
-    op.dumpLineNumbers  = this.dumpLineNumbers;
-    op.sourceMap        = (this.sourceMap is bool) ? this.sourceMap : (this.sourceMap as String).isNotEmpty;
-    op.sourceMapOptions = this.sourceMapOptions;
-    op.maxLineLen         = this.maxLineLen;
-    op.pluginManager      = this.pluginManager;
-    op.paths              = this.paths;
-    op.strictMath         = this.strictMath;
-    op.strictUnits        = this.strictUnits;
-    op.numPrecision       = this.numPrecision;
-    op.urlArgs            = this.urlArgs;
-    op.variables          = this.variables;
-
-    op.showTreeLevel      = this.showTreeLevel; //debug
-    op.customFunctions    = this.customFunctions;
-
-    return op;
-  }
+  LessOptions clone() =>
+    new LessOptions()
+      ..silent           = silent
+      ..verbose          = verbose
+      ..ieCompat         = ieCompat
+      ..compress         = compress
+      ..cleancssOptions  = cleancssOptions
+      ..dumpLineNumbers  = dumpLineNumbers
+      ..sourceMap        = (sourceMap is bool) ? sourceMap : (sourceMap as String).isNotEmpty
+      ..sourceMapOptions = sourceMapOptions
+      ..maxLineLen       = maxLineLen
+      ..pluginManager    = pluginManager
+      ..paths            = paths
+      ..strictMath       = strictMath
+      ..strictUnits      = strictUnits
+      ..numPrecision     = numPrecision
+      ..urlArgs          = urlArgs
+      ..variables        = variables
+      ..showTreeLevel    = showTreeLevel //debug
+      ..customFunctions  = customFunctions;
 }
 
 // *********************************

@@ -12,12 +12,12 @@ class IgnitionVisitor extends VisitorBase {
   bool isReplacing = true;
 
   IgnitionVisitor() {
-    this._visitor = new Visitor(this);
+    _visitor = new Visitor(this);
     environment = new Environment();
   }
 
   ///
-  Node run(Node root) => this._visitor.visit(root);
+  Node run(Node root) => _visitor.visit(root);
 
   ///
   /// Load options and remove directive
@@ -28,7 +28,7 @@ class IgnitionVisitor extends VisitorBase {
   }
 
   Function visitFtn(Node node) {
-    if (node is Options)    return this.visitOptions;
+    if (node is Options)    return visitOptions;
 
     return null;
   }

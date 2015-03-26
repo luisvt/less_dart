@@ -50,11 +50,11 @@ class ImportManager {
   List<String> queue = []; // Deprecated?
 
   ///
-  ImportManager(Contexts this.context, FileInfo rootFileInfo){
-    this.rootFilename = rootFileInfo.filename;
-    if (context.paths != null) this.paths = context.paths;
-    this.mime = context.mime;
-    this.environment = new Environment();
+  ImportManager(this.context, FileInfo rootFileInfo){
+    rootFilename = rootFileInfo.filename;
+    if (context.paths != null) paths = context.paths;
+    mime = context.mime;
+    environment = new Environment();
 
 //2.3.1
 //  var ImportManager = function(context, rootFileInfo) {
@@ -73,10 +73,10 @@ class ImportManager {
 
   /// Build the return content
   ImportedFile fileParsedFunc(String path, root, String fullPath) {
-    this.queue.remove(path);
-    bool importedEqualsRoot = (fullPath == this.rootFilename);
+    queue.remove(path);
+    bool importedEqualsRoot = (fullPath == rootFilename);
 
-    if (fullPath != null) this.files[fullPath] = root; // Store the root
+    if (fullPath != null) files[fullPath] = root; // Store the root
 
     return new ImportedFile(root, importedEqualsRoot, fullPath);
   }
@@ -108,9 +108,9 @@ class ImportManager {
   Future push(String path, bool tryAppendLessExtension, FileInfo currentFileInfo, ImportOptions importOptions) {
     Completer task = new Completer();
 
-    this.queue.add(path);
+    queue.add(path);
     FileInfo newFileInfo = new FileInfo.cloneForLoader(currentFileInfo, context);
-    FileManager fileManager = environment.getFileManager(path, currentFileInfo.currentDirectory, this.context, environment);
+    FileManager fileManager = environment.getFileManager(path, currentFileInfo.currentDirectory, context, environment);
 
     if (fileManager == null) {
       task.completeError(new LessError(message: 'Could not find a file-manager for ${path}'));
@@ -119,7 +119,7 @@ class ImportManager {
 
     if (tryAppendLessExtension) path = fileManager.tryAppendLessExtension(path);
 
-    fileManager.loadFile(path, currentFileInfo.currentDirectory, this.context, environment).then((FileLoaded loadedFile){
+    fileManager.loadFile(path, currentFileInfo.currentDirectory, context, environment).then((FileLoaded loadedFile){
       String resolvedFilename = loadedFile.filename;
       String contents = loadedFile.contents.replaceFirst(new RegExp('^\uFEFF'), '');
 
@@ -145,7 +145,7 @@ class ImportManager {
       }
       newFileInfo.filename = resolvedFilename;
 
-      Contexts newEnv = new Contexts.parse(this.context);
+      Contexts newEnv = new Contexts.parse(context);
       newEnv.processImports = false;
       newEnv.currentFileInfo = newFileInfo; // Not in original
       this.contents[resolvedFilename] = contents;
@@ -269,7 +269,7 @@ class ImportManager {
   }
 }
 
-  class ImportedFile {
+class ImportedFile {
     var root; //String or Node - content
     bool importedPreviously;
     String fullPath;

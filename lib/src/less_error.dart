@@ -42,14 +42,7 @@ class LessError {
   //bool silent = false;
 
   // less/parser.js 1.7.5 lines 309-331
-  LessError({int call, Contexts context, int index, String filename, String message, StackTrace stack, String type}) {
-    this.call = call;
-    this.index = index;
-    this.filename = filename;
-    this.message = message;
-    this.stack = stack;
-    this.type = type;
-
+  LessError({this.call, Contexts context, this.index, this.filename, this.message, this.stack, this.type}) {
     if (context != null) addFileInformation(context);
   }
 
@@ -57,28 +50,28 @@ class LessError {
   /// Completes the error with line, col in input
   ///
   addFileInformation(Contexts context) {
-    if (this.filename == null) this.filename = (context.currentFileInfo != null) ? context.currentFileInfo.filename : null;
-    if (this.type == null) this.type = 'Syntax';
+    if (filename == null) filename = (context.currentFileInfo != null) ? context.currentFileInfo.filename : null;
+    if (type == null) type = 'Syntax';
 
-    String input = getInput(this.filename, context);
-    if (input != null && this.index != null) {
-      LocationPoint loc = Utils.getLocation(this.index, input);
+    String input = getInput(filename, context);
+    if (input != null && index != null) {
+      LocationPoint loc = Utils.getLocation(index, input);
       int line = loc.line;
       int col = loc.column;
-      int callLine = (this.call != null) ? Utils.getLocation(this.call, input).line : 0;
+      int callLine = (call != null) ? Utils.getLocation(call, input).line : 0;
       List<String> lines = input.split('\n');
 
       this.line = (line is num)? line + 1 : null;
       this.callLine = callLine + 1;
-      this.callExtract = lines[callLine];
-      this.column = col;
-      this.extract = [
+      callExtract = lines[callLine];
+      column = col;
+      extract = [
         getLine(lines, line - 1),
         getLine(lines, line),
         getLine(lines, line + 1)
         ];
-      this.color = context.color;
-      this.isSimplyFormat = false;
+      color = context.color;
+      isSimplyFormat = false;
     }
     //this.silent = context.silent;
   }

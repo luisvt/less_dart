@@ -25,34 +25,34 @@ class CleancssOptions {
     switch(cleanOptionArgs[0]) {
       case "--keep-line-breaks":
       case "-b":
-        this.keepBreaks = true;
+        keepBreaks = true;
         break;
       case "--s0":
         // Remove all special comments, i.e. /*! comment */
-        this.keepSpecialComments = 0;
+        keepSpecialComments = 0;
         break;
       case "--s1":
         // Remove all special comments but the first one
-        this.keepSpecialComments = 1;
+        keepSpecialComments = 1;
         break;
       case "--skip-advanced":
         //Disable advanced optimizations - selector & property merging, reduction, etc.
-        this.noAdvanced = true;
+        noAdvanced = true;
         break;
       case "--advanced":
-        this.noAdvanced = false;
+        noAdvanced = false;
         break;
       case "--compatibility":
         // Force compatibility mode [ie7|ie8]
         if (cleanOptionArgs.length < 2) return setParseError(cleanOptionArgs[0]);
         if (cleanOptionArgs[1] == '') return setParseError(cleanOptionArgs[0]);
-        this.compatibility = cleanOptionArgs[1];
+        compatibility = cleanOptionArgs[1];
         break;
       case "--rounding-precision":
         // Rounds pixel values to `N` decimal places, defaults to 2
         if (cleanOptionArgs.length < 2) return setParseError(cleanOptionArgs[0]);
         try {
-          this.roundingPrecision = int.parse(cleanOptionArgs[1]);
+          roundingPrecision = int.parse(cleanOptionArgs[1]);
         } catch (e) {
           return setParseError(cleanOptionArgs[0]);
         }

@@ -7,5 +7,5 @@ class UnicodeDescriptor extends Node {
 
   final String type = 'UnicodeDescriptor';
 
-  UnicodeDescriptor(String this.value);
+  UnicodeDescriptor(this.value);
 }
