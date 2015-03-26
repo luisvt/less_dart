@@ -1,7 +1,19 @@
-//source: less/tree/element.js 2.4.0
+//source: less/tree/element.js 2.4.0 *
 
 part of tree.less;
 
+///
+/// A Selector Element
+///
+///     div
+///     + h1
+///     #socks
+///     input[type="text"]
+///
+/// Elements are the building blocks for Selectors,
+/// they are made out of a `Combinator` and an element name,
+/// such as a tag a class, or `*`.
+///
 class Element extends Node {
   Combinator combinator;
   var value = ''; // String or Node
@@ -38,10 +50,11 @@ class Element extends Node {
   }
 
   ///
+  /// Tree navegation for visitors
+  ///
   void accept(Visitor visitor) {
-    var _value = value;
     combinator = visitor.visit(combinator);
-    if (_value is Node) value = visitor.visit(_value);
+    if (value is Node) value = visitor.visit(value);
 
 //2.3.1
 //  Element.prototype.accept = function (visitor) {
@@ -53,6 +66,8 @@ class Element extends Node {
 //  };
   }
 
+  ///
+  /// Replace variables by value
   ///
   Element eval(Contexts context) => new Element(
                         combinator,
@@ -69,6 +84,8 @@ class Element extends Node {
 //  };
 
   ///
+  /// Writes the css code
+  ///
   void genCSS(Contexts context, Output output) {
     output.add(toCSS(context), currentFileInfo, index);
 
@@ -83,21 +100,21 @@ class Element extends Node {
   ///
   String toCSS(Contexts context) {
     if (context == null) context = new Contexts();
-    var _value = value;
+    var value = this.value;
     bool firstSelector = context.firstSelector;
 
-    if (_value is Paren) {
+    if (value is Paren) {
       // selector in parens should not be affected by outer selector
       // flags (breaks only interpolated selectors - see #1973)
       context.firstSelector = true;
     }
 
-    _value = (_value is Node) ? _value.toCSS(context) : _value;
+    value = (value is Node) ? value.toCSS(context) : value;
     context.firstSelector = firstSelector;
-    if (_value.isEmpty && combinator.value.startsWith('&')) {
+    if (value.isEmpty && combinator.value.startsWith('&')) {
       return '';
     } else {
-      return combinator.toCSS(context) + _value;
+      return combinator.toCSS(context) + value;
     }
 
 //2.3.1

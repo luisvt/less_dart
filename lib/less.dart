@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'src/less_error.dart';
 import 'src/less_options.dart';
 import 'src/logger.dart';
+import 'src/environment/environment.dart';
 import 'src/parser/parser.dart';
 import 'src/render/render.dart';
 import 'src/tree/tree.dart';
@@ -19,6 +20,7 @@ class Less {
   StringBuffer stdin  = new StringBuffer();
   StringBuffer stdout = new StringBuffer();
   StringBuffer stderr = new StringBuffer();
+  List<String> imports = []; //return list of imported files
 
   int currentErrorCode = 0;
   bool continueProcessing = true;
@@ -29,6 +31,7 @@ class Less {
   Less(){
     logger = new Logger(stderr); // care the order
     _options = new LessOptions();
+    Environment environment = new Environment()..options = _options;
   }
 
   ///
@@ -115,8 +118,7 @@ class Less {
 
   Future parseLessFile(String data){
     Parser parser = new Parser(_options);
-    return parser.parse(data)
-    .then((Ruleset tree){
+    return parser.parse(data).then((Ruleset tree){
       RenderResult result;
 
       if (tree == null) return new Future.value(currentErrorCode);
@@ -130,6 +132,7 @@ class Less {
 
       try {
         result = new ParseTree(tree, parser.imports).toCSS(_options.clone(), parser.context);
+        imports = result.imports;
 
         if (!_options.lint) {
           writeOutput(_options.output, result, _options);

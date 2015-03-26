@@ -8,7 +8,7 @@ main() {
   args.add('-no-color');
   args.add('--strict-math=on');
   args.add('--strict-units=on');
-  args.add('less/charsets.less');
+  args.add('/home/luis/dart/bootstrap_elements/lib/less/bootstrap.less');
   less.transform(args).then((exitCode){
     stderr.write(less.stderr.toString());
     stdout.writeln('\nstdout:');
